@@ -1,0 +1,15 @@
+# System
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Logs and temp
+*.log
+*.tmp
+.cache/
+
+# GroqShell specific
+*.resp.json
+*.err.log
