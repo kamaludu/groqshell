@@ -13,3 +13,8 @@
 # GroqShell specific
 *.resp.json
 *.err.log
+
+# Output generati da GroqShell
+*.out
+*.json
+*.txt
