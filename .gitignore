@@ -18,3 +18,7 @@
 *.out
 *.json
 *.txt
+
+# Directory temporanee create da mktemp
+groq.*/ 
+groq-refresh.*/
