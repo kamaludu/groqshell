@@ -140,6 +140,6 @@ GPLv3 — vedi LICENSE nel repository per i dettagli.
 ### Contatti
 - Autore: Cristian Evangelisti  
 - Email: opensource​@​cevangel.​anonaddy.​me
-- Repository: https://github.com/kamaludu/groqshell/main/
+- Repository: https://github.com/kamaludu/groqshell
 
 ---
