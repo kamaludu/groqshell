@@ -38,7 +38,7 @@ GroqShell fornisce un’interfaccia CLI semplice, sicura e robusta per chiamare 
 ## Installazione rapida
 
 ```sh
-curl -O https://raw.githubusercontent.com/<tuo-repo>/groqshell
+curl -O https://raw.githubusercontent.com/kamaludu/groqshell/main/bin/groqshell
 chmod +x groqshell
 export GROQAPIKEY="gsk_XXXXXXXXXXXXX"
 ```
