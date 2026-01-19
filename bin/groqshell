@@ -86,8 +86,18 @@
 # --- END HELP ----------------------------------------------------------------
 
 set -euo pipefail
-export LC_ALL=C
-export LANG=C
+
+# Prefer UTF-8 locales for correct JSON/Unicode handling if available
+if locale -a 2>/dev/null | grep -qi 'C.UTF-8'; then
+  export LC_ALL=C.UTF-8
+  export LANG=C.UTF-8
+elif locale -a 2>/dev/null | grep -qi 'en_US.utf8'; then
+  export LC_ALL=en_US.utf8
+  export LANG=en_US.utf8
+else
+  export LC_ALL=C
+  export LANG=C
+fi
 
 SCRIPT_NAME="groqshell"
 SCRIPT_VERSION="0.11.1"
@@ -174,7 +184,7 @@ auto_select_model(){
     printf ''
     return
   fi
-  if [ "$AUTO_POLICY" = "preferred" ]; then
+  if [ "${AUTO_POLICY:-preferred}" = "preferred" ]; then
     for pref in "llama3-70b-8192" "llama3-8b-8192" "llama3-groq-70b-8192-tool-use-preview"; do
       for m in "${ALLOWED_MODELS[@]}"; do
         [ "$m" = "$pref" ] && { printf '%s' "$m"; return; }
@@ -224,7 +234,7 @@ refresh_models(){
     echo "  - curl exit code: $code" >&2
     echo "  - curl stderr (first lines):" >&2
     head -n 20 "$errf" >&2 || true
-    [ "$DEBUG" -eq 1 ] && { echo "DEBUG: raw response (first 400 chars):"; head -c 400 "$out" >&2 || true; echo; }
+    [ "${DEBUG:-0}" -eq 1 ] && { echo "DEBUG: raw response (first 400 chars):"; head -c 400 "$out" >&2 || true; echo; }
     return 1
   fi
 
@@ -233,13 +243,13 @@ refresh_models(){
       jq -r '.data[].id' "$out" | sort -u > "$MODELS_FILE"
       chmod 600 "$MODELS_FILE" || true
       echo "Model list updated: $MODELS_FILE"
-      [ "$DEBUG" -eq 1 ] && { echo "DEBUG: models (head):"; head -n 50 "$MODELS_FILE" || true; }
+      [ "${DEBUG:-0}" -eq 1 ] && { echo "DEBUG: models (head):"; head -n 50 "$MODELS_FILE" || true; }
       return 0
     else
       : > "$MODELS_FILE" 2>/dev/null || true
       chmod 600 "$MODELS_FILE" 2>/dev/null || true
       echo "ERROR: model refresh failed — unexpected API response structure." >&2
-      [ "$DEBUG" -eq 1 ] && { echo "DEBUG: raw response (first 400 chars):"; head -c 400 "$out" >&2 || true; echo; }
+      [ "${DEBUG:-0}" -eq 1 ] && { echo "DEBUG: raw response (first 400 chars):"; head -c 400 "$out" >&2 || true; echo; }
       return 1
     fi
   else
@@ -254,7 +264,7 @@ refresh_models(){
       : > "$MODELS_FILE" 2>/dev/null || true
       chmod 600 "$MODELS_FILE" 2>/dev/null || true
       echo "ERROR: model refresh failed — unable to parse API response without jq." >&2
-      [ "$DEBUG" -eq 1 ] && { echo "DEBUG: raw response (first 400 chars):"; head -c 400 "$out" >&2 || true; echo; }
+      [ "${DEBUG:-0}" -eq 1 ] && { echo "DEBUG: raw response (first 400 chars):"; head -c 400 "$out" >&2 || true; echo; }
       return 1
     fi
   fi
@@ -312,13 +322,23 @@ if [ "$REFRESH_MODELS" -eq 1 ]; then
 fi
 
 if [ "$LIST_MODELS" -eq 1 ]; then
-  if [ -f "$MODELS_FILE" ] && [ -s "$MODELS_FILE" ]; then cat "$MODELS_FILE"; exit 0; else echo "No models file found or it's empty. Run --refresh-models to fetch the list." >&2; exit 1; fi
+  if [ -f "$MODELS_FILE" ] && [ -s "$MODELS_FILE" ]; then
+    cat "$MODELS_FILE"
+    exit 0
+  else
+    echo "No models file found or it's empty. Run --refresh-models to fetch the list." >&2
+    exit 1
+  fi
 fi
 
 if [ -n "${SET_DEFAULT_MODEL:-}" ]; then
   load_whitelist
-  model_in_whitelist "$SET_DEFAULT_MODEL" || { echo "Error: model '$SET_DEFAULT_MODEL' not in whitelist. Run --list-models or --refresh-models." >&2; exit 1; }
-  printf '%s' "$SET_DEFAULT_MODEL" > "$DEFAULT_MODEL_FILE"; chmod 600 "$DEFAULT_MODEL_FILE" || true
+  model_in_whitelist "$SET_DEFAULT_MODEL" || {
+    echo "Error: model '$SET_DEFAULT_MODEL' not in whitelist. Run --list-models or --refresh-models." >&2
+    exit 1
+  }
+  printf '%s' "$SET_DEFAULT_MODEL" > "$DEFAULT_MODEL_FILE"
+  chmod 600 "$DEFAULT_MODEL_FILE" || true
   echo "Default model set to: $SET_DEFAULT_MODEL"
   exit 0
 fi
@@ -367,12 +387,22 @@ fi
 [ -n "$content" ] || { echo "Error: no prompt provided." >&2; exit 1; }
 
 # Numeric validation
-if ! awk "BEGIN{exit !($TEMP+0== $TEMP+0)}"; then echo "Error: --temp must be numeric" >&2; exit 1; fi
-if ! awk "BEGIN{exit !($MAX_TOKENS+0== $MAX_TOKENS+0)}"; then echo "Error: --max must be numeric" >&2; exit 1; fi
+if ! awk "BEGIN{exit !($TEMP+0== $TEMP+0)}"; then
+  echo "Error: --temp must be numeric" >&2
+  exit 1
+fi
+if ! awk "BEGIN{exit !($MAX_TOKENS+0== $MAX_TOKENS+0)}"; then
+  echo "Error: --max must be numeric" >&2
+  exit 1
+fi
 
 # Final whitelist guard
 if [ "${#ALLOWED_MODELS[@]}" -gt 0 ]; then
-  model_in_whitelist "$MODEL" || { echo "Error: model '$MODEL' not supported or deprecated." >&2; echo "Available models: ${ALLOWED_MODELS[*]}" >&2; exit 1; }
+  model_in_whitelist "$MODEL" || {
+    echo "Error: model '$MODEL' not supported or deprecated." >&2
+    echo "Available models: ${ALLOWED_MODELS[*]}" >&2
+    exit 1
+  }
 fi
 
 # Prepare run tmpdir and payload
@@ -380,6 +410,9 @@ RUN_TMPDIR="$(make_tmpdir)"; [ -n "$RUN_TMPDIR" ] || { echo "Error: cannot creat
 PAYLOAD="$RUN_TMPDIR/payload.json"; RESP="$RUN_TMPDIR/resp.json"; ERR="$RUN_TMPDIR/err.log"
 cleanup(){ rm -rf "$RUN_TMPDIR"; }
 trap cleanup EXIT INT TERM
+
+# --- Build JSON payload safely (jq -> python -> sed fallback) ----------------
+export MODEL TEMP MAX_TOKENS SYSTEM_PROMPT CONTENT="$content"
 
 if [ "$JQ_OK" -eq 1 ]; then
   if [ -n "$SYSTEM_PROMPT" ]; then
@@ -389,15 +422,44 @@ if [ "$JQ_OK" -eq 1 ]; then
     jq -n --arg model "$MODEL" --arg content "$content" --argjson temp "$TEMP" --argjson max "$MAX_TOKENS" \
       '{model:$model,stream:false,temperature:$temp,max_tokens:$max,messages:[{role:"user",content:$content}]}' >"$PAYLOAD"
   fi
+
+elif [ "$PY_OK" -eq 1 ]; then
+  python3 - "$PAYLOAD" <<'PY'
+import json, os, sys
+out = sys.argv[1]
+model = os.environ.get("MODEL")
+temp = float(os.environ.get("TEMP"))
+max_tokens = int(os.environ.get("MAX_TOKENS"))
+system = os.environ.get("SYSTEM_PROMPT") or None
+content = os.environ.get("CONTENT") or ""
+
+obj = {
+    "model": model,
+    "stream": False,
+    "temperature": temp,
+    "max_tokens": max_tokens,
+    "messages": []
+}
+
+if system:
+    obj["messages"].append({"role": "system", "content": system})
+
+obj["messages"].append({"role": "user", "content": content})
+
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(obj, f, ensure_ascii=False)
+PY
+
 else
-  esc_content="$(printf '%s' "$content" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\n/\\n/g')"
-  if [ -n "$SYSTEM_PROMPT" ]; then esc_system="$(printf '%s' "$SYSTEM_PROMPT" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\n/\\n/g')"; fi
+  # sed fallback (last resort) — escape CR and newlines
+  esc_content="$(printf '%s' "$content" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\r//g; s/\n/\\n/g')"
   if [ -n "$SYSTEM_PROMPT" ]; then
+    esc_system="$(printf '%s' "$SYSTEM_PROMPT" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\r//g; s/\n/\\n/g')"
     printf '{"model":"%s","stream":false,"temperature":%s,"max_tokens":%s,"messages":[{"role":"system","content":"%s"},{"role":"user","content":"%s"}]}' \
-      "$MODEL" "$TEMP" "$MAX_TOKENS" "$esc_system" "$esc_content" > "$PAYLOAD"
+      "$MODEL" "$TEMP" "$MAX_TOKENS" "$esc_system" "$esc_content" >"$PAYLOAD"
   else
     printf '{"model":"%s","stream":false,"temperature":%s,"max_tokens":%s,"messages":[{"role":"user","content":"%s"}]}' \
-      "$MODEL" "$TEMP" "$MAX_TOKENS" "$esc_content" > "$PAYLOAD"
+      "$MODEL" "$TEMP" "$MAX_TOKENS" "$esc_content" >"$PAYLOAD"
   fi
 fi
 
@@ -419,56 +481,171 @@ PY
   fi
 }
 
-# Call API (non-streaming)
+# Call API (non-streaming) with HTTP code handling and distinct exit codes
 call_once(){
-  if [ -z "${GROQ_API_KEY:-}" ]; then echo "Error: GROQ_API_KEY is not set. Aborting network call." >&2; return 1; fi
-  local status=0 CURL_OPTS_LOCAL=() skip_next=0
+  if [ -z "${GROQ_API_KEY:-}" ]; then
+    echo "Error: GROQ_API_KEY is not set. Aborting network call." >&2
+    return 1
+  fi
+
+  local status=0 http_file http_code
+  local API_URL="https://api.groq.com/openai/v1/chat/completions"
+
+  http_file="$(mktemp -p "$TMPDIR" groq-http.XXXX 2>/dev/null || mktemp "$TMPDIR/groq-http.XXXX" 2>/dev/null || printf '')"
+  [ -n "$http_file" ] || { echo "Error: cannot create temporary file for HTTP code." >&2; return 2; }
+
+  local CURL_OPTS_LOCAL=() skip_next=0
   for opt in "${CURL_OPTS[@]}"; do
     if [ "$skip_next" -eq 1 ]; then skip_next=0; continue; fi
     if [ "$opt" = "--max-time" ]; then skip_next=1; continue; fi
     CURL_OPTS_LOCAL+=("$opt")
   done
   CURL_OPTS_LOCAL+=( "--max-time" "120" )
-  curl "${CURL_OPTS_LOCAL[@]}" -H "Authorization: Bearer $GROQ_API_KEY" -H "Content-Type: application/json" --data-binary @"$PAYLOAD" "https://api.groq.com/openai/v1/chat/completions" -o "$RESP" 2>"$ERR" || status=$?
-  if [ "$status" -ne 0 ]; then
+
+  if ! curl "${CURL_OPTS_LOCAL[@]}" \
+      -H "Authorization: Bearer $GROQ_API_KEY" \
+      -H "Content-Type: application/json" \
+      --data-binary @"$PAYLOAD" \
+      "$API_URL" \
+      -o "$RESP" \
+      -w '%{http_code}' \
+      2>"$ERR" >"$http_file"; then
+
+    status=$?
     echo "curl failed (status $status). Details (first lines of $ERR):" >&2
     head -n 200 "$ERR" >&2 || true
-    return 1
+    rm -f "$http_file"
+    return 2   # network/curl error
   fi
-  return 0
+
+  http_code="$(cat "$http_file" 2>/dev/null || echo "000")"
+  rm -f "$http_file"
+
+  case "$http_code" in
+    2*) return 0 ;;   # success
+    *)
+      echo "HTTP error: $http_code" >&2
+      head -n 200 "$RESP" >&2 || true
+      return 3        # API/HTTP error
+      ;;
+  esac
 }
 
 extract_text(){
   if [ "$JQ_OK" -eq 1 ]; then
-    jq -r '.choices[0].message.content // .choices[0].delta.content // empty' "$RESP" 2>/dev/null || jq -r '..|.content? // empty' "$RESP" 2>/dev/null || true
+    jq -r '.choices[0].message.content // .choices[0].delta.content // empty' "$RESP" 2>/dev/null || true
+  elif [ "$PY_OK" -eq 1 ]; then
+    python3 - "$RESP" <<'PY'
+import json, sys
+try:
+    j = json.load(open(sys.argv[1], encoding="utf-8"))
+    # prefer choices[0].message.content, fallback to delta.content
+    c = (j.get("choices",[{}])[0].get("message",{}).get("content")
+         or j.get("choices",[{}])[0].get("delta",{}).get("content"))
+    if c:
+        print(c)
+except Exception:
+    pass
+PY
   else
-    grep -o '"content":[^]]*' "$RESP" 2>/dev/null | sed -E 's/.*"content"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/' | tr -d '\000' | tr -d '\r\n' || cat "$RESP" 2>/dev/null || true
+    # last-resort best-effort (may be lossy)
+    grep -o '"content":[^]]*' "$RESP" 2>/dev/null \
+      | sed -E 's/.*"content"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/' \
+      | sed 's/\\n/\n/g' | tr -d '\000' || cat "$RESP" 2>/dev/null || true
   fi
 }
 
 finalize_output(){
-  local text="$1"; local len=${#text}
-  if [ "$FORCE_SAVE_MODE" = "nosave" ]; then printf '%s\n' "$text"; return; fi
+  local text="$1"
+  local len=${#text}
   local do_save=0
-  [ "$FORCE_SAVE_MODE" = "save" ] && do_save=1 || { [ "$len" -gt "$THRESHOLD" ] && do_save=1 || do_save=0; }
-  [ "$do_save" -eq 0 ] && { printf '%s\n' "$text"; return; }
-  local dest_dir dest_path
-  if [ -n "$OUT_PATH" ]; then
-    if [ -d "$OUT_PATH" ]; then dest_dir="$OUT_PATH"; dest_path="$dest_dir/$(date +%Y%m%d-%H%M%S)-groq-output-$$.txt"; else dest_path="$OUT_PATH"; dest_dir="$(dirname "$dest_path")"; fi
-  else
-    dest_dir="$TMPDIR"; dest_path="$TMPDIR/$(date +%Y%m%d-%H%M%S)-groq-output-$$.txt"
+
+  # If explicitly disabled, print and return success
+  if [ "${FORCE_SAVE_MODE:-}" = "nosave" ]; then
+    printf '%s\n' "$text"
+    return 0
   fi
-  mkdir -p "$dest_dir" 2>/dev/null || true
-  local avail_kb need_kb
-  avail_kb=$(df -k "$dest_dir" 2>/dev/null | awk 'END{print $4+0}'); need_kb=$(( (len + 1024) / 1024 ))
-  if [ "$avail_kb" -lt "$need_kb" ]; then echo "Error: insufficient space to save output. Printing to terminal." >&2; printf '%s\n' "$text"; return; fi
+
+  # Decide whether to save: forced save or length threshold
+  if [ "${FORCE_SAVE_MODE:-}" = "save" ]; then
+    do_save=1
+  else
+    if [ "$len" -gt "$THRESHOLD" ]; then
+      do_save=1
+    else
+      do_save=0
+    fi
+  fi
+
+  # If not saving, print and return
+  if [ "$do_save" -eq 0 ]; then
+    printf '%s\n' "$text"
+    return 0
+  fi
+
+  local dest_dir dest_path tmpf avail_kb need_kb
+
+  # Determine destination directory and path
+  if [ -n "${OUT_PATH:-}" ]; then
+    if [ -d "$OUT_PATH" ]; then
+      dest_dir="$OUT_PATH"
+      dest_path="$dest_dir/$(date +%Y%m%d-%H%M%S)-groq-output-$$.txt"
+    else
+      dest_path="$OUT_PATH"
+      dest_dir="$(dirname "$dest_path")"
+    fi
+  else
+    dest_dir="$TMPDIR"
+    dest_path="$TMPDIR/$(date +%Y%m%d-%H%M%S)-groq-output-$$.txt"
+  fi
+
+  # Ensure destination directory exists
+  if ! mkdir -p "$dest_dir" 2>/dev/null; then
+    echo "Error: cannot create destination directory: $dest_dir. Printing to terminal." >&2
+    printf '%s\n' "$text"
+    return 1
+  fi
+
+  # Check available space (best-effort). If df fails, skip the check.
+  avail_kb="$(df -k "$dest_dir" 2>/dev/null | awk 'END{print $4+0}' || echo "")"
+  need_kb=$(( (len + 1023) / 1024 ))
+  if [ -n "$avail_kb" ] && [ "$avail_kb" -lt "$need_kb" ]; then
+    echo "Error: insufficient space to save output. Printing to terminal." >&2
+    printf '%s\n' "$text"
+    return 1
+  fi
+
+  # Create a secure temporary file
   tmpf="$(mktemp -p "$TMPDIR" groq-out.XXXX 2>/dev/null || mktemp "$TMPDIR/groq-out.XXXX" 2>/dev/null || true)"
-  [ -n "$tmpf" ] || { echo "Error: cannot create temporary file for saving. Printing to terminal." >&2; printf '%s\n' "$text"; return; }
-  chmod 600 "$tmpf" || true; printf '%s' "$text" > "$tmpf"; fsync_file "$tmpf"
-  if mv "$tmpf" "$dest_path" 2>/dev/null; then fsync_file "$dest_path"; chmod 600 "$dest_path" || true; echo "Output saved to: $dest_path"; else echo "Output saved to (tmp): $tmpf" >&2; fi
+  if [ -z "$tmpf" ]; then
+    echo "Error: cannot create temporary file for saving. Printing to terminal." >&2
+    printf '%s\n' "$text"
+    return 1
+  fi
+
+  # Ensure temporary file is removed on function exit unless moved successfully
+  trap 'rm -f "$tmpf"' RETURN
+
+  chmod 600 "$tmpf" 2>/dev/null || true
+  # Write text with a trailing newline to preserve readability
+  printf '%s\n' "$text" >"$tmpf"
+  fsync_file "$tmpf" || true
+
+  # Try to move atomically to destination; if mv fails, keep tmp for inspection
+  if mv "$tmpf" "$dest_path" 2>/dev/null; then
+    fsync_file "$dest_path" || true
+    chmod 600 "$dest_path" 2>/dev/null || true
+    echo "Output saved to: $dest_path"
+    trap - RETURN
+    return 0
+  else
+    echo "Output saved to (tmp): $tmpf" >&2
+    trap - RETURN
+    return 1
+  fi
 }
 
-# Main retry loop
+# Main retry loop with distinct exit codes
 attempt=1
 while [ $attempt -le $MAX_RETRIES ]; do
   if call_once; then
@@ -480,21 +657,35 @@ while [ $attempt -le $MAX_RETRIES ]; do
       else
         echo "Error: no textual content extracted from response." >&2
       fi
-      if [ "$DEBUG" -eq 1 ]; then
+      if [ "${DEBUG:-0}" -eq 1 ]; then
         echo "DEBUG: RESP (head):" >&2; head -n 200 "$RESP" >&2 || true
         echo "DEBUG: ERR (head):" >&2; head -n 200 "$ERR" >&2 || true
       fi
-      exit 1
+      exit 4
     fi
     finalize_output "$text"
-    if [ "$DEBUG" -eq 1 ]; then
+    if [ "${DEBUG:-0}" -eq 1 ]; then
       echo "DEBUG: RESP (head):" >&2; head -n 50 "$RESP" >&2 || true
       echo "DEBUG: ERR (head):" >&2; head -n 50 "$ERR" >&2 || true
     fi
     exit 0
+  else
+    rc=$?
+    if [ "$rc" -eq 2 ]; then
+      echo "Network error (curl). Retrying..." >&2
+    elif [ "$rc" -eq 3 ]; then
+      echo "HTTP/API error. Not retrying." >&2
+      errpair="$(extract_api_error "$RESP")"; api_err="${errpair%%|*}"; api_code="${errpair#*|}"
+      if [ -n "$api_err" ]; then
+        [ -n "$api_code" ] && echo "API error: ${api_err} (code: ${api_code})" >&2 || echo "API error: ${api_err}" >&2
+      fi
+      exit 3
+    else
+      echo "Unknown error (code $rc). Retrying..." >&2
+    fi
   fi
   sleep $((attempt * 2)); attempt=$((attempt + 1))
 done
 
 echo "Error: request failed after $MAX_RETRIES attempts." >&2
-exit 1
+exit 2
