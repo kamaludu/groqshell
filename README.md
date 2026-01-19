@@ -8,6 +8,8 @@
 
 <mark>GroqShell</mark> fornisce un’interfaccia CLI semplice, sicura e robusta per chiamare l’API Groq da ambienti Unix‑like, inclusi **Linux**, **macOS**, **WSL** e **Termux**. Gestisce dinamicamente la whitelist dei modelli tramite l’endpoint ufficiale, salva automaticamente output lunghi, e mette la sicurezza al centro del design.
 
+![ShellCheck](https://github.com/kamaludu/groqshell/actions/workflows/shellcheck.yml/badge.svg)
+![Smoke Tests](https://github.com/kamaludu/groqshell/actions/workflows/smoke.yml/badge.svg)
 ---
 
 ## Caratteristiche principali
