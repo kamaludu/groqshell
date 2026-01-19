@@ -1,0 +1,33 @@
+name: Smoke tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      GROQ_API_KEY: "gsk_test_dummy_key"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bash curl jq python3
+
+      - name: Prepare fake models whitelist for CI
+        run: |
+          mkdir -p "$HOME/.config/groq"
+          echo "test-model-001" > "$HOME/.config/groq/models.txt"
+
+      - name: Make groqshell executable
+        run: chmod +x bin/groqshell
+
+      - name: Run smoke tests
+        run: bash tests/smoke.sh
