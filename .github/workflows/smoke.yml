@@ -1,0 +1,26 @@
+name: Smoke tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bash curl jq python3
+
+      - name: Make groqshell executable
+        run: chmod +x bin/groqshell
+
+      - name: Run smoke tests
+        run: bash tests/smoke.sh
