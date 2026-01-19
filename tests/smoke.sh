@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # tests/smoke.sh
-# Smoke tests minimi per GroqShell: --version e --dry-run (payload JSON)
+# Smoke tests minimi per GroqShell: --version e --dry-run (estrazione JSON robusta)
 # Exit codes:
 #  0 = success
 #  1 = generic failure (test assertion)
@@ -32,6 +32,16 @@ fi
 echo
 echo "2) Verifica --dry-run (payload JSON)"
 
+# Ensure a minimal local whitelist for local runs (CI usually sets this)
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/groq"
+MODELS_FILE="$CONFIG_DIR/models.txt"
+if [ ! -s "$MODELS_FILE" ]; then
+  mkdir -p "$CONFIG_DIR"
+  echo "test-model-001" > "$MODELS_FILE"
+  chmod 600 "$MODELS_FILE"
+  echo "  Nota: whitelist temporanea creata in $MODELS_FILE"
+fi
+
 PROMPT_TEXT="test payload"
 
 # Run --dry-run providing the prompt via stdin (most compatible)
@@ -47,7 +57,7 @@ if [ $DRY_EXIT -ne 0 ]; then
   exit 1
 fi
 
-# Trim leading/trailing whitespace for JSON check
+# Trim leading/trailing whitespace
 DRY_OUT_TRIMMED="$(printf '%s' "$DRY_OUT" | sed -e 's/^[[:space:]\n\r]*//' -e 's/[[:space:]\n\r]*$//')"
 
 if [ -z "$DRY_OUT_TRIMMED" ]; then
@@ -55,37 +65,49 @@ if [ -z "$DRY_OUT_TRIMMED" ]; then
   exit 1
 fi
 
-# Validate JSON: prefer jq, fallback to python3, fallback to a basic heuristic
+# Extract only the JSON portion: find first line that begins (optionally after whitespace) with { or [
+LINENO="$(printf '%s\n' "$DRY_OUT_TRIMMED" | grep -n -m1 '^[[:space:]]*[{[]' | cut -d: -f1 || true)"
+
+if [ -z "$LINENO" ]; then
+  echo "  FAIL: impossibile trovare l'inizio del JSON nell'output"
+  echo "  Output completo:"
+  echo "$DRY_OUT_TRIMMED"
+  exit 1
+fi
+
+JSON_ONLY="$(printf '%s\n' "$DRY_OUT_TRIMMED" | tail -n +"$LINENO")"
+
+# Validate JSON: prefer jq, fallback to python3, fallback to heuristic
 if command -v jq >/dev/null 2>&1; then
-  if printf '%s' "$DRY_OUT_TRIMMED" | jq . >/dev/null 2>&1; then
+  if printf '%s' "$JSON_ONLY" | jq . >/dev/null 2>&1; then
     echo "  OK: --dry-run ha stampato JSON valido (jq)"
   else
-    echo "  FAIL: output non è JSON valido (jq)"
-    echo "  Output:"
-    echo "$DRY_OUT_TRIMMED"
+    echo "  FAIL: JSON non valido (jq)"
+    echo "  Estratto JSON:"
+    echo "$JSON_ONLY"
     exit 1
   fi
 elif command -v python3 >/dev/null 2>&1; then
-  if printf '%s' "$DRY_OUT_TRIMMED" | python3 -c 'import sys,json; json.load(sys.stdin)' >/dev/null 2>&1; then
+  if printf '%s' "$JSON_ONLY" | python3 -c 'import sys,json; json.load(sys.stdin)' >/dev/null 2>&1; then
     echo "  OK: --dry-run ha stampato JSON valido (python3)"
   else
-    echo "  FAIL: output non è JSON valido (python3)"
-    echo "  Output:"
-    echo "$DRY_OUT_TRIMMED"
+    echo "  FAIL: JSON non valido (python3)"
+    echo "  Estratto JSON:"
+    echo "$JSON_ONLY"
     exit 1
   fi
 else
-  # Basic heuristic: output should start with { or [
-  first_char="$(printf '%s' "$DRY_OUT_TRIMMED" | cut -c1)"
+  # Basic heuristic: JSON should start with { or [
+  first_char="$(printf '%s' "$JSON_ONLY" | sed -n '1p' | sed -e 's/^[[:space:]]*//' -e 's/^\(.\).*/\1/')"
   if [ "$first_char" = "{" ] || [ "$first_char" = "[" ]; then
     echo "  WARNING: jq/python3 non installati; output sembra JSON (heuristic)"
-    echo "  Output (prima riga):"
-    printf '%s\n' "$DRY_OUT_TRIMMED" | head -n 1
+    echo "  Estratto (prima riga):"
+    printf '%s\n' "$JSON_ONLY" | head -n 1
     echo "  OK (heuristic)"
   else
     echo "  FAIL: jq/python3 non disponibili e output non sembra JSON"
-    echo "  Output:"
-    echo "$DRY_OUT_TRIMMED"
+    echo "  Estratto JSON:"
+    echo "$JSON_ONLY"
     exit 1
   fi
 fi
