@@ -108,23 +108,29 @@ groqshell --dry-run "ciao"
 
 ## Risoluzione problemi e test consigliati
 
-Verifiche rapide
+**Verifiche rapide**
 - Dry run per controllare il JSON inviato:
+```sh
   groqshell --dry-run "Test payload with \"quotes\" and newlines\nand unicode: € ✓"
+```
 - Pipe input:
+```sh
   echo "Spiegami questo codice" | groqshell
+```
 - Test chiave API non valida (verifica codice 3):
+```sh
   GROQ_API_KEY="invalid" groqshell "ciao" || echo "exit:$?"
+```
 - Test fallback senza jq:
   Temporaneamente rimuovi o nascondi jq e ripeti --dry-run per verificare che il fallback Python venga usato (se python3 è installato).
 
-Problemi comuni
+## Problemi comuni
 - Error: cannot create destination directory → il percorso passato a --out non è creabile o non è scrivibile; usare un percorso sotto la home o $TMPDIR.
-- Output non salvato ma presente in tmp → se mv verso la destinazione fallisce, lo script lascia il file temporaneo nel tmpdir per ispezione; controllare i messaggi di log e il tmpdir mostrato.
-- Caratteri strani o JSON invalido → assicurarsi che la locale sia UTF‑8 e che jq o python3 siano presenti per i fallback più robusti.
+- **Output non salvato ma presente in tmp** → se mv verso la destinazione fallisce, lo script lascia il file temporaneo nel tmpdir per ispezione; controllare i messaggi di log e il tmpdir mostrato.
+- **Caratteri strani o JSON invalido** → assicurarsi che la locale sia UTF‑8 e che jq o python3 siano presenti per i fallback più robusti.
 
 ## Esempio INSTALL per Termux
-
+```sh
 pkg update
 pkg install -y bash curl jq python
 # posiziona lo script
@@ -134,5 +140,4 @@ chmod +x "$HOME/.local/bin/groqshell"
 export PATH="$HOME/.local/bin:$PATH"
 export GROQ_API_KEY="gsk_..."
 groqshell --version
-
-Se vuoi, posso generare una versione breve da incollare direttamente nel repository o preparare un piccolo script tests/smoke.sh che esegue i controlli essenziali (dry‑run, pipe, invalid key).
+```
