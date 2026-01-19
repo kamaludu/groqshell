@@ -1,4 +1,5 @@
-![GroqShell](https://img.shields.io/badge/GroqShell-00aa55?style=for-the-badge)
+
+![GroqShell](https://img.shields.io/badge/_GroqShell_-00aa55?style=for-the-badge&label=%E2%9E%9C&labelColor=004d00)
 ![CLI](https://img.shields.io/badge/CLI-green?style=for-the-badge&logo=gnu-bash&logoColor=white)
 ![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)
 
