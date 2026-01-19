@@ -6,7 +6,7 @@
 
 **GroqShell** — *Wrapper Bash sicuro, portabile e dinamico per l’API OpenAI‑compatibile di Groq.*
 
-GroqShell fornisce un’interfaccia CLI semplice, sicura e robusta per chiamare l’API Groq da ambienti Unix‑like, inclusi **Linux**, **macOS**, **WSL** e **Termux**. Gestisce dinamicamente la whitelist dei modelli tramite l’endpoint ufficiale, salva automaticamente output lunghi, e mette la sicurezza al centro del design.
+<mark>GroqShell</mark> fornisce un’interfaccia CLI semplice, sicura e robusta per chiamare l’API Groq da ambienti Unix‑like, inclusi **Linux**, **macOS**, **WSL** e **Termux**. Gestisce dinamicamente la whitelist dei modelli tramite l’endpoint ufficiale, salva automaticamente output lunghi, e mette la sicurezza al centro del design.
 
 ---
 
