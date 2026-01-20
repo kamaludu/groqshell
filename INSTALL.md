@@ -1,7 +1,7 @@
 # Installazione rapida
 
 Scopo
-Questo file spiega come installare e verificare groqshell, le dipendenze raccomandate, le variabili d’ambiente richieste e i codici di uscita che lo script può restituire.
+Questo file spiega come installare e verificare groqbash, le dipendenze raccomandate, le variabili d’ambiente richieste e i codici di uscita che lo script può restituire.
 
 ## Prerequisiti e dipendenze
 
@@ -26,19 +26,19 @@ export LANG=C.UTF-8
 
 Scarica lo script
 ```sh
-curl -O https://raw.githubusercontent.com/kamaludu/groqshell/main/bin/groqshell
+curl -O https://raw.githubusercontent.com/kamaludu/groqbash/main/bin/groqbash
 ```
 
 Rendi eseguibile
 ```sh
-chmod +x groqshell
+chmod +x groqbash
 ```
 
 Posiziona il binario nel tuo PATH (opzionale, consigliato)
 ```sh
 # esempio utente Linux/macOS
 mkdir -p "$HOME/.local/bin"
-mv groqshell "$HOME/.local/bin/groqshell"
+mv groqbash "$HOME/.local/bin/groqbash"
 # assicurati che ~/.local/bin sia nel PATH
 export PATH="$HOME/.local/bin:$PATH"
 ```
@@ -50,7 +50,7 @@ export GROQ_API_KEY="gsk_XXXXXXXXXXXXX"
 
 Verifica installazione
 ```sh
-groqshell --version
+groqbash --version
 ```
 
 ## Comportamento dei file temporanei e percorso di output
@@ -68,27 +68,27 @@ groqshell --version
 
 Prompt semplice
 ```sh
-groqshell "scrivi una funzione bash che..."
+groqbash "scrivi una funzione bash che..."
 ```
 
 Input da pipe
 ```sh
-echo "Spiegami questo codice" | groqshell
+echo "Spiegami questo codice" | groqbash
 ```
 
 Input da file
 ```sh
-groqshell -f input.txt
+groqbash -f input.txt
 ```
 
 Forzare salvataggio su file
 ```sh
-groqshell --save --out /percorso/di/uscita/output.txt "testo lungo..."
+groqbash --save --out /percorso/di/uscita/output.txt "testo lungo..."
 ```
 
 Dry run (mostra payload JSON senza inviare)
 ```sh
-groqshell --dry-run "ciao"
+groqbash --dry-run "ciao"
 ```
 
 ## Codici di uscita e significato
@@ -111,15 +111,15 @@ groqshell --dry-run "ciao"
 **Verifiche rapide**
 - Dry run per controllare il JSON inviato:
 ```sh
-  groqshell --dry-run "Test payload with \"quotes\" and newlines\nand unicode: € ✓"
+  groqbash --dry-run "Test payload with \"quotes\" and newlines\nand unicode: € ✓"
 ```
 - Pipe input:
 ```sh
-  echo "Spiegami questo codice" | groqshell
+  echo "Spiegami questo codice" | groqbash
 ```
 - Test chiave API non valida (verifica codice 3):
 ```sh
-  GROQ_API_KEY="invalid" groqshell "ciao" || echo "exit:$?"
+  GROQ_API_KEY="invalid" groqbash "ciao" || echo "exit:$?"
 ```
 - Test fallback senza jq:
   Temporaneamente rimuovi o nascondi jq e ripeti --dry-run per verificare che il fallback Python venga usato (se python3 è installato).
@@ -135,9 +135,9 @@ pkg update
 pkg install -y bash curl jq python
 # posiziona lo script
 mkdir -p "$HOME/.local/bin"
-mv groqshell "$HOME/.local/bin/groqshell"
-chmod +x "$HOME/.local/bin/groqshell"
+mv groqbash "$HOME/.local/bin/groqbash"
+chmod +x "$HOME/.local/bin/groqbash"
 export PATH="$HOME/.local/bin:$PATH"
 export GROQ_API_KEY="gsk_..."
-groqshell --version
+groqbash --version
 ```
