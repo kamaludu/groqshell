@@ -97,7 +97,7 @@ Dry run (mostra payload JSON)
 | **Opzione** | Descrizione |
 |---|---|
 | **-m, --model <name>** | Seleziona il modello da usare |
-| ⭐ **--refresh-models** | Aggiorna la whitelist dai modelli ufficiali Groq |
+| 👉 **--refresh-models** | Aggiorna la whitelist dai modelli ufficiali Groq |
 | **--list-models** | Mostra i modelli disponibili (whitelist) |
 | **--set-default <model>** | Imposta il modello predefinito persistente |
 | **--system <text>** | System prompt (ruolo system) |
