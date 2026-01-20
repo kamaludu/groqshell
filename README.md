@@ -15,11 +15,12 @@ Puoi scaricarlo, renderlo eseguibile e usarlo immediatamente, senza installazion
 ![Smoke Tests](https://github.com/kamaludu/groqshell/actions/workflows/smoke.yml/badge.svg)
 ---
 
-> ![English](https://img.shields.io/badge/EN-English-white?style=flat)  
+>
+>  ![English](https://img.shields.io/badge/EN-English-white?style=flat)  
 > **English is not my first language.**  
 > Please feel free to use simple English; I will do my best to respond clearly.
+> 
 
----
 ## Caratteristiche principali
 
 - **Refresh modelli ufficiale** tramite `GET https://api.groq.com/openai/v1/models`.  
