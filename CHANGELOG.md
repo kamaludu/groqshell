@@ -15,3 +15,5 @@
 - Opzioni CLI: --refresh-models, --list-models, --dry-run, --debug
 - Salvataggio automatico output oltre soglia
 - Documentazione: README, INSTALL, CHANGELOG, CONTRIBUTING
+
+Nota: alcune sezioni del codice sono state generate o rifinite con l’assistenza di strumenti di intelligenza artificiale.
