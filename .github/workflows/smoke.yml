@@ -26,8 +26,8 @@ jobs:
           mkdir -p "$HOME/.config/groq"
           echo "test-model-001" > "$HOME/.config/groq/models.txt"
 
-      - name: Make groqshell executable
-        run: chmod +x bin/groqshell
+      - name: Make groqbash executable
+        run: chmod +x bin/groqbash 
 
       - name: Run smoke tests
         run: bash tests/smoke.sh
