@@ -12,6 +12,10 @@ Se desideri:
 
 puoi aprire una issue: verrà letta con attenzione e valutata con piacere.
 
+## Uso di strumenti di IA
+Durante lo sviluppo di GroqShell possono essere utilizzati strumenti di IA per generare bozze, suggerimenti o refactoring.  
+Ogni contributo viene comunque rivisto manualmente per garantire qualità, sicurezza e coerenza con gli obiettivi del progetto.
+
 ## Pull request
 Le pull request non sono aperte al pubblico.  
 Eventuali modifiche al codice vengono gestite direttamente dal maintainer.
