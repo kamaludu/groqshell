@@ -1,13 +1,15 @@
-
 ![GroqShell](https://img.shields.io/badge/_GroqShell_-00aa55?style=for-the-badge&label=%E2%9E%9C&labelColor=004d00)
-![CLI](https://img.shields.io/badge/CLI-green?style=for-the-badge&logo=gnu-bash&logoColor=white)
-![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)
+![CLI](https://img.shields.io/badge/CLI-green?&logo=gnu-bash&logoColor=white)
+![License: GPLv3](https://img.shields.io/badge/License-GPLv3-green.svg)
 
 # GroqShell
 
 **GroqShell** — *Wrapper Bash sicuro, portabile e dinamico per l’API OpenAI‑compatibile di Groq.*
 
-<mark>GroqShell</mark> fornisce un’interfaccia CLI semplice, sicura e robusta per chiamare l’API Groq da ambienti Unix‑like, inclusi **Linux**, **macOS**, **WSL** e **Termux**. Gestisce dinamicamente la whitelist dei modelli tramite l’endpoint ufficiale, salva automaticamente output lunghi, e mette la sicurezza al centro del design.
+![single-file](https://img.shields.io/badge/single--file-yes-green?style=plastic) <mark>&nbsp;GroqShell è un singolo file Bash auto‑contenuto.&nbsp; </mark>  
+Puoi scaricarlo, renderlo eseguibile e usarlo immediatamente, senza installazione.
+
+**GroqShell** fornisce un’interfaccia CLI semplice, sicura e robusta per chiamare l’API Groq da ambienti Unix‑like, inclusi **Linux**, **macOS**, **WSL** e **Termux**. Gestisce dinamicamente la whitelist dei modelli tramite l’endpoint ufficiale, salva automaticamente output lunghi, e mette la sicurezza al centro del design.
 
 ![ShellCheck](https://github.com/kamaludu/groqshell/actions/workflows/shellcheck.yml/badge.svg)
 ![Smoke Tests](https://github.com/kamaludu/groqshell/actions/workflows/smoke.yml/badge.svg)
