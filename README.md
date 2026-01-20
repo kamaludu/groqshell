@@ -1,18 +1,18 @@
-![GroqShell](https://img.shields.io/badge/_GroqShell_-00aa55?style=for-the-badge&label=%E2%9E%9C&labelColor=004d00)
+![GroqBash](https://img.shields.io/badge/_GroqBash_-00aa55?style=for-the-badge&label=%E2%9E%9C&labelColor=004d00)
 ![CLI](https://img.shields.io/badge/CLI-green?&logo=gnu-bash&logoColor=white)
 ![License: GPLv3](https://img.shields.io/badge/License-GPLv3-green.svg)
 
-# GroqShell
+# GroqBash
 
-**GroqShell** — *Wrapper Bash sicuro, portabile e dinamico per l’API OpenAI‑compatibile di Groq.*
+**GroqBash** — *Wrapper Bash sicuro, portabile e dinamico per l’API OpenAI‑compatibile di Groq.*
 
-![single-file](https://img.shields.io/badge/single--file-yes-green?style=plastic) <mark>&nbsp;GroqShell è un singolo file Bash auto‑contenuto.&nbsp; </mark>  
+![single-file](https://img.shields.io/badge/single--file-yes-green?style=plastic) <mark>&nbsp;GroqBash è un singolo file Bash auto‑contenuto.&nbsp; </mark>  
 Puoi scaricarlo, renderlo eseguibile e usarlo immediatamente, senza installazione.
 
-**GroqShell** fornisce un’interfaccia CLI semplice, sicura e robusta per chiamare l’API Groq da ambienti Unix‑like, inclusi **Linux**, **macOS**, **WSL** e **Termux**. Gestisce dinamicamente la whitelist dei modelli tramite l’endpoint ufficiale, salva automaticamente output lunghi, e mette la sicurezza al centro del design.
+**GroqBash** fornisce un’interfaccia CLI semplice, sicura e robusta per chiamare l’API Groq da ambienti Unix‑like, inclusi **Linux**, **macOS**, **WSL** e **Termux**. Gestisce dinamicamente la whitelist dei modelli tramite l’endpoint ufficiale, salva automaticamente output lunghi, e mette la sicurezza al centro del design.
 
-![ShellCheck](https://github.com/kamaludu/groqshell/actions/workflows/shellcheck.yml/badge.svg)
-![Smoke Tests](https://github.com/kamaludu/groqshell/actions/workflows/smoke.yml/badge.svg)
+![ShellCheck](https://github.com/kamaludu/groqbash/actions/workflows/shellcheck.yml/badge.svg)
+![Smoke Tests](https://github.com/kamaludu/groqbash/actions/workflows/smoke.yml/badge.svg)
 ---
 
 >
@@ -68,27 +68,27 @@ Per dettagli completi sulle dipendenze e sul comportamento dei fallback (`jq` �
 
 Prompt diretto
 ```sh
-./groqshell "scrivi una poesia in italiano"
+./groqbash "scrivi una poesia in italiano"
 ```
 
 Input da file
 ```sh
-./groqshell -f prompt.txt
+./groqbash -f prompt.txt
 ```
 
 Pipe
 ```sh
-echo "spiegami la relatività" | ./groqshell
+echo "spiegami la relatività" | ./groqbash
 ```
 
 Esempio con modello specifico
 ```sh
-./groqshell -m llama-3.3-70b-versatile "scrivi un saggio breve"
+./groqbash -m llama-3.3-70b-versatile "scrivi un saggio breve"
 ```
 
 Dry run (mostra payload JSON)
 ```sh
-./groqshell --dry-run "ciao"
+./groqbash --dry-run "ciao"
 ```
 
 ---
@@ -128,7 +128,7 @@ Dry run (mostra payload JSON)
 ### Refresh modelli
 Esegui:
 ```sh
-./groqshell --refresh-models
+./groqbash --refresh-models
 ```
 - Scarica la lista ufficiale via API autenticata.  
 - Svuota e ricostruisce models.txt.  
@@ -166,7 +166,7 @@ GPLv3 — vedi LICENSE nel repository per i dettagli.
 
 ### Note
 
-Parti del codice e della documentazione di GroqShell sono state sviluppate con il supporto di strumenti di intelligenza artificiale, utilizzati come assistenti alla scrittura e al refactoring.  
+Parti del codice e della documentazione di GroqBash sono state sviluppate con il supporto di strumenti di intelligenza artificiale, utilizzati come assistenti alla scrittura e al refactoring.  
 La progettazione, l’architettura e le decisioni tecniche restano interamente curate a mano.
 
 ---
@@ -174,6 +174,6 @@ La progettazione, l’architettura e le decisioni tecniche restano interamente c
 ### Contatti
 - Autore: Cristian Evangelisti  
 - Email: opensource​@​cevangel.​anonaddy.​me
-- Repository: https://github.com/kamaludu/groqshell
+- Repository: https://github.com/kamaludu/groqbash
 
 ---
