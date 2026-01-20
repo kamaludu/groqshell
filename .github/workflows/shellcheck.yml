@@ -18,4 +18,4 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y shellcheck
 
       - name: Run ShellCheck
-        run: shellcheck -x -S style -S warning -S error bin/groqshell
+        run: shellcheck -x -S style -S warning -S error bin/groqbash 
