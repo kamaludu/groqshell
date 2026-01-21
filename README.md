@@ -1,5 +1,5 @@
 ![GroqBash](https://img.shields.io/badge/_GroqBash_-00aa55?style=for-the-badge&label=%E2%9E%9C&labelColor=004d00)
-![CLI](https://img.shields.io/badge/CLI-green?&logo=gnu-bash&logoColor=white)
+![CLI](https://img.shields.io/badge/CLI-green?&logo=gnu-bash&logoColor=grey)
 ![License: GPLv3](https://img.shields.io/badge/License-GPLv3-green.svg)
 
 # GroqBash
@@ -16,7 +16,7 @@ Puoi scaricarlo, renderlo eseguibile e usarlo immediatamente, senza installazion
 ---
 
 >
->  ![English](https://img.shields.io/badge/EN-English-white?style=flat)  
+>  ![English](https://img.shields.io/badge/EN-English-orange?style=flat)  
 > **English is not my first language.**  
 > Please feel free to use simple English; I will do my best to respond clearly.
 > 
