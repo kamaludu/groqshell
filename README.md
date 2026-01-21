@@ -48,7 +48,7 @@ Puoi scaricarlo, renderlo eseguibile e usarlo immediatamente, senza installazion
 
 ## Installazione
 
-Per le istruzioni di installazione dettagliate, le dipendenze raccomandate e i comandi di verifica, vedi il file `INSTALL.md` nel repository.
+Per le istruzioni di installazione dettagliate, le dipendenze raccomandate e i comandi di verifica, vedi il file **[INSTALL](INSTALL.md)** nel repository.
 
 ---
 
@@ -160,7 +160,7 @@ Esegui:
 
 ## Licenza
 
-GPLv3 — vedi LICENSE nel repository per i dettagli.
+GPLv3 — vedi [LICENSE](LICENSE.md) nel repository per i dettagli.
 
 ---
 
