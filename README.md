@@ -1,6 +1,6 @@
-![GroqBash](https://img.shields.io/badge/_GroqBash_-00aa55?style=for-the-badge&label=%E2%9E%9C&labelColor=004d00)
+[![GroqBash](https://img.shields.io/badge/_GroqBash_-00aa55?style=for-the-badge&label=%E2%9E%9C&labelColor=004d00)](README.md)
 ![CLI](https://img.shields.io/badge/CLI-green?&logo=gnu-bash&logoColor=grey)
-![License: GPLv3](https://img.shields.io/badge/License-GPLv3-green.svg)
+[![License: GPLv3](https://img.shields.io/badge/License-GPLv3-green.svg)](LICENSE)
 
 # GroqBash
 
