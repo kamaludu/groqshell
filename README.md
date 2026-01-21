@@ -160,7 +160,7 @@ Esegui:
 
 ## Licenza
 
-GPLv3 — vedi [LICENSE](LICENSE.md) nel repository per i dettagli.
+GPLv3 — vedi [LICENSE](LICENSE) nel repository per i dettagli.
 
 ---
 
