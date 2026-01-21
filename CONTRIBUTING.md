@@ -27,6 +27,6 @@ Le pull request non sono aperte al pubblico.
 Eventuali modifiche al codice vengono gestite direttamente dal maintainer.
 
 ## Licenza
-Qualsiasi suggerimento o idea condivisa tramite issue potrà essere integrata nel progetto sotto licenza **GPLv3**.
+Qualsiasi suggerimento o idea condivisa tramite issue potrà essere integrata nel progetto sotto [Licenza **GPLv3**](LICENSE).
 
 Grazie per la comprensione e per l’interesse verso GroqBash.
