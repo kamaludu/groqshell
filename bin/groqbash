@@ -6,6 +6,7 @@
 # License: GPL-3.0-or-later
 # Source: https://github.com/kamaludu/groqbash
 # =============================================================================
+
 set -euo pipefail
 
 SCRIPT_NAME="groqbash"
@@ -289,7 +290,16 @@ while [ $# -gt 0 ]; do
     --install-extras)
       INSTALL_EXTRAS=1; shift ;;
     --version) printf '%s %s (%s)\n' "$SCRIPT_NAME" "$SCRIPT_VERSION" "$SCRIPT_DATE"; exit 0 ;;
-    -h|--help) sed -n '1,240p' "$0"; exit 0 ;;
+    -h|--help)
+      # External help loading: print help file from extras/docs/help.txt
+      help_file="$GROQBASH_EXTRAS_DIR/docs/help.txt"
+      if [ -f "$help_file" ]; then
+        cat "$help_file"
+      else
+        printf 'Help file not found: %s\n' "$help_file"
+      fi
+      exit 0
+      ;;
     --) shift; break ;;
     -*)
       echo "Unknown option: $1" >&2
@@ -626,7 +636,7 @@ EOF
 }
 
 # -------------------------
-# Provider module loader with safety checks
+# Provider module loader with safety checks (STEP 7.2: file-level hardening)
 # -------------------------
 PROVIDER_MODULE_LOADED=0
 if [ "$PROVIDER" != "groq" ]; then
@@ -654,6 +664,49 @@ if [ "$PROVIDER" != "groq" ]; then
     dbg "Warning: provider directory $provider_dir is owned by $owner, not $current_user."
     # Do not fail; only fail on world-writable above.
   fi
+
+  # --- BEGIN STEP 7.2: provider file-level hardening ---
+  providerfile="$provider_module_path"
+
+  # Capture pre-check listing for minimal TOCTOU mitigation
+  before="$(ls -ld "$providerfile" 2>/dev/null || true)"
+
+  # 1) Existence check
+  if [ ! -f "$providerfile" ]; then
+    echo "Provider '$PROVIDER' is not installed. Run --install-extras." >&2
+    exit 1
+  fi
+
+  # 2) Ownership check
+  file_owner="$(ls -ld "$providerfile" 2>/dev/null | awk '{print $3}' 2>/dev/null || printf '')"
+  current_user="${USER:-$(id -un 2>/dev/null || printf '')}"
+  if [ -n "$file_owner" ] && [ -n "$current_user" ] && [ "$file_owner" != "$current_user" ]; then
+    echo "Security error: provider file not owned by current user: $providerfile" >&2
+    exit 1
+  fi
+
+  # 3) Permission check (no group/world write)
+  perms="$(ls -ld "$providerfile" 2>/dev/null | awk '{print $1}' 2>/dev/null || true)"
+  group_write="$(printf '%s' "$perms" | awk '{print substr($0,6,1)}')"
+  others_write="$(printf '%s' "$perms" | awk '{print substr($0,9,1)}')"
+  if [ "$group_write" = "w" ] || [ "$others_write" = "w" ]; then
+    echo "Security error: provider file is writable by group or world: $providerfile" >&2
+    exit 1
+  fi
+
+  # 4) Symlink check
+  if [ -L "$providerfile" ]; then
+    echo "Security error: provider file is a symlink: $providerfile" >&2
+    exit 1
+  fi
+
+  # 5) Minimal TOCTOU mitigation: re-check listing
+  after="$(ls -ld "$providerfile" 2>/dev/null || true)"
+  if [ "$before" != "$after" ]; then
+    echo "Security error: provider file changed during validation: $providerfile" >&2
+    exit 1
+  fi
+  # --- END STEP 7.2 ---
 
   if [ -f "$provider_module_path" ]; then
     # shellcheck source=/dev/null
@@ -866,3 +919,5 @@ else
   perform_request_once || exit 1
   exit 0
 fi
+
+# End groqbash
