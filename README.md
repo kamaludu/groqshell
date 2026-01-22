@@ -3,8 +3,6 @@
 [![License: GPLv3](https://img.shields.io/badge/License-GPLv3-green.svg)](LICENSE)
 [![ShellCheck](https://github.com/kamaludu/groqbash/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/kamaludu/groqbash/actions/workflows/shellcheck.yml)
 [![Smoke Tests](https://github.com/kamaludu/groqbash/actions/workflows/smoke.yml/badge.svg)](https://github.com/kamaludu/groqbash/actions/workflows/smoke.yml)
-
-
 # GroqBash &nbsp; [![English](https://img.shields.io/badge/EN-English_version-orange?style=flat)](README-en.md) 
 
 **GroqBash**  *wrapper CLI sicuro e Bash‑first per l’API Chat Completions compatibile OpenAI di Groq.*
