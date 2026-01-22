@@ -3,7 +3,7 @@
 # File: extras/docs/help.txt
 # Copyright (C) 2026 Cristian Evangelisti
 # License: GPL-3.0-or-later
-# Source: https://github.com/<your-repo>/groqbash
+# Source: https://github.com/kamaludu/groqbash
 # =============================================================================
 
 GroqBash is a secure, modular, Bash-focused CLI wrapper for the Groq
