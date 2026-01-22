@@ -4,7 +4,7 @@
 # File: extras/lib/debug.sh
 # Copyright (C) 2026 Cristian Evangelisti
 # License: GPL-3.0-or-later
-# Source: https://github.com/<your-repo>/groqbash
+# Source: https://github.com/kamaludu/groqbash
 # =============================================================================
 # Purpose: Optional debug and diagnostics helpers for groqbash.
 # Source this file to enable richer diagnostics. The core does not require it.
