@@ -1,5 +1,10 @@
-GroqBash — Bash-first wrapper for the Groq API
-==============================================
+# =============================================================================
+# GroqBash — Bash-first wrapper for the Groq API
+# File: extras/docs/help.txt
+# Copyright (C) 2026 Cristian Evangelisti
+# License: GPL-3.0-or-later
+# Source: https://github.com/<your-repo>/groqbash
+# =============================================================================
 
 GroqBash is a secure, modular, Bash-focused CLI wrapper for the Groq
 OpenAI-compatible Chat Completions API. It supports streaming, model
