@@ -1,48 +1,57 @@
+
 [![GroqBash](https://img.shields.io/badge/_GroqBash_-00aa55?style=for-the-badge&label=%E2%9E%9C&labelColor=004d00)](README.md)
 [![CLI](https://img.shields.io/badge/CLI-green?&logo=gnu-bash&logoColor=grey)](#)
 [![License: GPLv3](https://img.shields.io/badge/License-GPLv3-green.svg)](LICENSE)
 [![ShellCheck](https://github.com/kamaludu/groqbash/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/kamaludu/groqbash/actions/workflows/shellcheck.yml)
 [![Smoke Tests](https://github.com/kamaludu/groqbash/actions/workflows/smoke.yml/badge.svg)](https://github.com/kamaludu/groqbash/actions/workflows/smoke.yml)
-# GroqBash &nbsp; [![English](https://img.shields.io/badge/EN-English_version-orange?style=flat)](README-en.md) 
 
-**GroqBash**  *wrapper CLI sicuro e Bash‑first per l’API Chat Completions compatibile OpenAI di Groq.*
+# GroqBash &nbsp; [![English](https://img.shields.io/badge/EN-English_version-orange?style=flat)](README-en.md)
 
-GroqBash è un **singolo script Bash**, auto‑contenuto e facilmente verificabile.  
-Puoi scaricarlo, renderlo eseguibile, esportare la tua API key e iniziare subito a usarlo.
+**GroqBash** — *wrapper CLI sicuro, Bash‑first e completamente auditabile per l’API Chat Completions compatibile OpenAI di Groq.*
 
-Funziona su ambienti Unix‑like: **Linux**, **macOS**, **WSL**, **Termux**.
+GroqBash è un **singolo script Bash**, auto‑contenuto, leggibile e verificabile.  
+Scaricalo, rendilo eseguibile, esporta la tua API key e inizia subito a usarlo.
+
+Compatibile con ambienti Unix‑like: **Linux**, **macOS**, **WSL**, **Termux**.
 
 ---
 
 ## Caratteristiche principali
 
-- **Lista modelli dinamica** tramite `GET https://api.groq.com/openai/v1/models`  
-  – nessun modello hardcoded, nessun fallback nascosto.  
+- **Lista modelli dinamica**  
+  tramite `GET https://api.groq.com/openai/v1/models`  
+  → nessun modello hardcoded, nessun fallback nascosto.
+
 - **Sicurezza by design**  
-  – nessun uso di `/tmp` per i temporanei interni, nessun `eval`, permessi restrittivi sui file sensibili.  
+  → nessun uso di `/tmp`, nessun `eval`, permessi restrittivi, controlli provider robusti.
+
 - **Bash‑first**  
-  – dipendenza esplicita da Bash, con logica chiara e verificabile.  
+  → logica chiara, nessuna dipendenza non necessaria.
+
 - **Streaming e non‑streaming**  
-  – output in tempo reale o completo a fine risposta.  
+  → output in tempo reale o completo a fine risposta.
+
 - **Salvataggio automatico**  
-  – per output lunghi oltre una soglia configurabile.  
-- **Gestione modelli**  
-  – refresh, lista, default persistente, auto‑selezione basata su policy.  
+  → per output lunghi oltre una soglia configurabile.
+
+- **Gestione modelli avanzata**  
+  → refresh, lista, default persistente, auto‑selezione basata su policy.
+
 - **Extras opzionali**  
-  – provider, utility, documentazione, strumenti avanzati di sicurezza e test.
+  → provider, documentazione estesa, strumenti di sicurezza, test.
 
 ---
 
 ## Modello di minaccia (versione breve)
 
-GroqBash è progettato per **ambienti single‑user** (laptop, Termux, shell personale), non per server multi‑tenant ostili.
+GroqBash è progettato per **ambienti single‑user** (laptop, Termux, shell personale).
 
-- I provider sono **codice eseguito nella tua shell**. Devono risiedere in directory di tua proprietà e non scrivibili da altri.  
-- Variabili d’ambiente come `GROQBASHEXTRASDIR` e `GROQBASHTMPDIR` sono considerate **configurazione fidata**.  
-- Lo script **non esegue mai** l’output del modello come comandi.  
-- Rischi TOCTOU e limiti del parsing JSON/SSE sono documentati e accettabili per uno script Bash hardenizzato.
+- I provider sono **codice eseguito nella tua shell**: devono risiedere in directory sicure e non scrivibili da altri.  
+- Variabili come `GROQBASHEXTRASDIR` e `GROQBASHTMPDIR` sono considerate **configurazione fidata**.  
+- Lo script **non esegue mai** l’output del modello.  
+- I rischi TOCTOU e i limiti del parsing JSON/SSE sono mitigati e documentati.
 
-Per dettagli completi, vedi **SECURITY.md**.
+Per dettagli completi: **SECURITY.md**.
 
 ---
 
@@ -52,33 +61,33 @@ Per dettagli completi, vedi **SECURITY.md**.
 
 - `bash`
 - `curl`
-- coreutils standard (`mktemp`, `chmod`, `mv`, `mkdir`, `head`, `sed`, `awk`, `grep`)
+- coreutils (`mktemp`, `chmod`, `mv`, `mkdir`, `head`, `sed`, `awk`, `grep`)
 
 **Consigliati**
 
 - `jq` (parsing JSON)
 - `python3` (fsync opzionale)
-- `sha256sum` o `shasum` (per gli extras di sicurezza)
+- `sha256sum` o `shasum` (per extras di sicurezza)
 
 ---
 
 ## Installazione
 
-Per istruzioni dettagliate, dipendenze e comandi di verifica, vedi **[INSTALL.md](INSTALL.md)**.
+Istruzioni dettagliate in **[INSTALL.md](INSTALL.md)**.
 
 In breve:
 
-`sh
+```sh
 chmod +x groqbash
 export GROQ_API_KEY="gsk_xxxxxxxxxxxxxxxxx"
 ./groqbash --help
-`
+```
 
 Extras opzionali (docs, provider, sicurezza, test):
 
-`sh
+```sh
 ./groqbash --install-extras
-`
+```
 
 ---
 
@@ -86,39 +95,39 @@ Extras opzionali (docs, provider, sicurezza, test):
 
 Prompt diretto:
 
-`sh
+```sh
 ./groqbash "scrivi una breve poesia in italiano"
-`
+```
 
 Input da file:
 
-`sh
+```sh
 ./groqbash -f prompt.txt
-`
+```
 
 Pipe:
 
-`sh
+```sh
 echo "spiegami la relatività" | ./groqbash
-`
+```
 
 Modello specifico:
 
-`sh
+```sh
 ./groqbash -m llama-3.3-70b-versatile "scrivi un saggio breve"
-`
+```
 
 Dry run (mostra il payload JSON):
 
-`sh
+```sh
 ./groqbash --dry-run "ciao"
-`
+```
 
 Provider (se extras installati):
 
-`sh
+```sh
 ./groqbash --provider gemini "traduci questo"
-`
+```
 
 ---
 
@@ -154,24 +163,24 @@ Provider (se extras installati):
 ### File di configurazione
 
 - `~/.config/groq/models.txt`  
-  – lista modelli dinamica (ricreata a ogni refresh).  
+  → lista modelli dinamica (ricreata a ogni refresh).  
 - `~/.config/groq/default_model`  
-  – modello predefinito persistente.
+  → modello predefinito persistente.
 
 ### Precedenza selezione modello
 
 1. `-m/--model`  
-2. `default_model` (se valido)  
-3. `GROQ_MODEL` (se valido)  
+2. `default_model`  
+3. `GROQ_MODEL`  
 4. Auto‑selezione basata su policy  
 
-Se la lista modelli è vuota, GroqBash fallisce e richiede `--refresh-models`.
+Se la lista modelli è vuota: errore → richiede `--refresh-models`.
 
 ### Refresh modelli
 
-`sh
+```sh
 ./groqbash --refresh-models
-`
+```
 
 Scarica la lista ufficiale, ricostruisce `models.txt`, mostra diagnostica (più dettagli con `--debug`).
 
@@ -179,10 +188,10 @@ Scarica la lista ufficiale, ricostruisce `models.txt`, mostra diagnostica (più 
 
 ## File temporanei e percorsi output
 
-- GroqBash **non usa mai `/tmp`** per i temporanei interni.  
+- GroqBash **non usa mai `/tmp`**.  
 - I temporanei runtime sono creati con `mktemp -d` e permessi `700`.  
-- I file salvati hanno permessi restrittivi (es. `600`).  
-- Con `--out`, GroqBash crea la directory se possibile; altrimenti stampa su terminale con messaggio esplicito.
+- I file salvati hanno permessi restrittivi (`600`).  
+- Con `--out`, GroqBash crea la directory se possibile; altrimenti stampa su terminale.
 
 ---
 
@@ -193,21 +202,21 @@ Gli extras non modificano il comportamento del core.
 ### Sicurezza
 
 - `extras/security/verify.sh`  
-  – verifica provider, permessi, symlink, owner, checksum.  
+  → verifica provider, permessi, symlink, owner, checksum.  
 - `extras/security/validate-env.sh`  
-  – controlla `GROQBASHEXTRASDIR`, `GROQBASHTMPDIR`, strumenti richiesti.
+  → controlla `GROQBASHEXTRASDIR`, `GROQBASHTMPDIR`, strumenti richiesti.
 
 Esecuzione:
 
-`sh
+```sh
 extras/security/verify.sh
 extras/security/validate-env.sh
-`
+```
 
 ### Test
 
 - `extras/test/json-sse-suite.sh`  
-  – test per escaping JSON e parsing SSE (senza chiamate API reali).
+  → test per escaping JSON e parsing SSE (senza chiamate API reali).
 
 ---
 
@@ -215,12 +224,12 @@ extras/security/validate-env.sh
 
 - **Nessun eval**.  
 - **Nessuna esecuzione dell’output del modello**.  
-- **Provider = codice**: mantieni `extras/providers` sicuro e non scrivibile da altri.  
+- **Provider = codice**: mantieni `extras/providers` sicuro.  
 - **Variabili d’ambiente = configurazione fidata**.  
-- **Parsing JSON/SSE**: robusto per uso normale, non un parser completo.  
+- **Parsing JSON/SSE**: robusto ma non un parser completo.  
 - **TOCTOU**: mitigato ma non eliminabile in Bash.
 
-Per dettagli completi, vedi **SECURITY.md**.
+Per dettagli completi: **SECURITY.md**.
 
 ---
 
@@ -255,4 +264,3 @@ L’architettura e le decisioni tecniche restano curate manualmente.
 - Autore: Cristian Evangelisti  
 - Email: opensource​@​cevangel.​anonaddy.​me  
 - Repository: https://github.com/kamaludu/groqbash
-`
