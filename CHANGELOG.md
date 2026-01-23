@@ -8,7 +8,7 @@
 
 ---
 
-## [1.0.0] – 2026‑01‑22
+## [1.0.0] – 2026‑01‑23
 ### Added
 - Full security‑hardened release after STEP 5.6 → STEP 7.2 audit cycle
 - Dynamic model whitelist using Groq Models API (`/openai/v1/models`)
@@ -31,14 +31,23 @@
   - directory permission checks
   - file‑level owner/permission/symlink checks
   - minimal TOCTOU mitigation
+  - before/after integrity check now uses `getfile_signature()` (stat/find) instead of `ls -ld`
 - Improved JSON escaping and SSE parsing robustness
 - Unified banner and header across all scripts
 - More consistent CLI behavior and error messages
+- CURL options unified via array (`CURLBASEOPTS[@]`) to eliminate SC2086
+- Centralized DRY‑RUN behavior with single payload preview point
+- Improved streaming parsing using `jq -R -c 'fromjson?'`
+- Consistent tmpdir initialization via `ensureruntmpdir()`
 
 ### Fixed
 - Removed unsafe fallback temp paths
 - Eliminated legacy parsing logic and deprecated model fallbacks
 - Corrected edge cases in model auto‑selection policy
+- Replaced fragile `A && B || C` logic with explicit `if` block (SC2015)
+- Removed all remaining `ls -ld` fallbacks (SC2012)
+- Quoting fixes for exit codes (SC2086)
+- Resolved unbound‑variable edge cases under `set -euo pipefail`
 
 ---
 
