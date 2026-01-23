@@ -14,9 +14,9 @@ GroqBash è uno **script Bash singolo**, sicuro e auto‑contenuto, progettato p
 - **bash**
 - **curl**
 - **coreutils** (mktemp, chmod, mv, mkdir, head, sed, awk, grep)
+- **jq**
 
 ## Consigliati
-- **jq** — parsing JSON più robusto (non obbligatorio)
 - **python3** — fallback per fsync e serializzazione (opzionale)
 - **sha256sum / shasum** — per gli extras di sicurezza
 
