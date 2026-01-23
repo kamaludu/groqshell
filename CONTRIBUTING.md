@@ -30,7 +30,9 @@ Principi fondamentali:
 - nessuna esecuzione dell’output del modello  
 - nessun uso di `/tmp` per i temporanei interni  
 - provider caricati solo da directory sicure  
-- quoting rigoroso e parsing robusto
+- quoting rigoroso e parsing robusto  
+- nessun comportamento implicito o ambiguo  
+- nessun fallback nascosto
 
 ---
 
@@ -83,6 +85,9 @@ Gli snippet condivisi nelle issue dovrebbero seguire lo stile del progetto:
 - parsing sicuro  
 - compatibilità POSIX‑like  
 - nessun comportamento implicito  
+- nessun uso di `/tmp`  
+- nessuna dipendenza non necessaria  
+- nessuna modifica allo stato globale non documentata
 
 ---
 
@@ -99,6 +104,7 @@ Tutto il codice viene comunque rivisto manualmente per garantire:
 - sicurezza  
 - qualità  
 - coerenza  
+- aderenza ai principi del progetto
 
 ---
 
@@ -110,7 +116,7 @@ Grazie per la comprensione e per l’interesse verso GroqBash.
 
 ---
 
-## 🇬🇧 English Section — Contributing to GroqBash
+# 🇬🇧 English Section — Contributing to GroqBash
 
 GroqBash is a personal project, developed and maintained in free time.  
 For this reason:
@@ -138,7 +144,9 @@ Core principles:
 - no execution of model output  
 - no use of `/tmp` for internal temporary files  
 - providers loaded only from safe directories  
-- strict quoting and robust parsing
+- strict quoting and robust parsing  
+- no hidden fallbacks  
+- no ambiguous behavior
 
 ---
 
@@ -191,6 +199,9 @@ Snippets shared in issues should follow the project’s style:
 - safe parsing  
 - POSIX‑like compatibility  
 - no implicit behavior  
+- no `/tmp` usage  
+- no unnecessary dependencies  
+- no undocumented global state changes
 
 ---
 
@@ -207,6 +218,7 @@ All code is manually reviewed to ensure:
 - security  
 - quality  
 - consistency  
+- adherence to project principles
 
 ---
 
