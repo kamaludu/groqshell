@@ -59,6 +59,11 @@ jobs:
             echo "tests/good.json NOT FOUND"
           fi
           echo
+          echo "=== Extra checks on tests/smoke.sh ==="
+          file tests/smoke.sh || true
+          echo "show first lines of tests/smoke.sh:"
+          sed -n '1,120p' tests/smoke.sh || true
+          echo
           echo "=== run explicit checks ==="
           echo "-> ./bin/groqbash --version (if exists)"
           if [ -x ./bin/groqbash ]; then
@@ -83,5 +88,29 @@ jobs:
             echo "skipped (--json-input test not runnable)"
           fi
 
-      - name: Run smoke tests
-        run: bash tests/smoke.sh
+      - name: Extra checks (temporary)
+        run: |
+          echo "=== Shell and environment details ==="
+          echo "SHELL: $SHELL"
+          echo "Runner uname:"
+          uname -a || true
+          echo
+          echo "=== Verify jq and bash versions ==="
+          command -v jq && jq --version || echo "jq missing"
+          command -v bash && bash --version || echo "bash missing"
+
+      - name: Run smoke tests (verbose)
+        run: |
+          echo "=== Running smoke.sh with bash -x ==="
+          # Run with tracing and capture output to a log file for diagnosis.
+          bash -x tests/smoke.sh 2>&1 | tee smoke-run.log || true
+          echo
+          echo "=== smoke.sh exit summary ==="
+          # Show the full log to the workflow output for diagnosis
+          tail -n +1 smoke-run.log || true
+          echo
+          # Fail the job if the smoke script did not report success
+          if ! grep -q "Tutti i test smoke sono passati." smoke-run.log; then
+            echo "Smoke tests did not pass; printing smoke-run.log for diagnosis."
+            exit 1
+          fi
