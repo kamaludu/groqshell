@@ -47,13 +47,18 @@ PROMPT_TEXT="test payload"
 # Run dry-run but capture stdout+stderr to a file and preserve the real exit code.
 set +e
 DRY_LOG="$(mktemp -t groqbash-dry.XXXXXX)" || { echo "Cannot create temp file"; exit 2; }
-# Enable groqbash debug output (masks API key) to get more diagnostics
-DEBUG=1 printf '%s' "$PROMPT_TEXT" | "$GROQSH" --dry-run >"$DRY_LOG" 2>&1
-DRY_EXIT=$?
+
+# Ensure DEBUG is exported for groqbash and capture the exit status of groqbash via PIPESTATUS.
+# Note: DEBUG=1 must be in the environment of groqbash, so prefix groqbash, not printf.
+printf '%s' "$PROMPT_TEXT" | DEBUG=1 "$GROQSH" --dry-run >"$DRY_LOG" 2>&1
+# Capture exit code of groqbash (second element of PIPESTATUS)
+DRY_EXIT=${PIPESTATUS[1]:-1}
+
 # show the raw log for diagnosis (will appear in CI logs)
 echo "=== groqbash --dry-run raw output (begin) ==="
 sed -n '1,200p' "$DRY_LOG" || true
 echo "=== groqbash --dry-run raw output (end) ==="
+
 # read the captured output into variable for existing logic
 DRY_OUT="$(cat "$DRY_LOG" 2>/dev/null || true)"
 rm -f "$DRY_LOG" || true
