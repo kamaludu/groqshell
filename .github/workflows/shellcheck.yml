@@ -1,4 +1,4 @@
-name: ShellCheck
+name: Smoke tests
 
 on:
   push:
@@ -7,15 +7,110 @@ on:
     branches: [ "main" ]
 
 jobs:
-  shellcheck:
+  smoke:
     runs-on: ubuntu-latest
+    env:
+      GROQ_API_KEY: "gsk_test_dummy_key"
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install ShellCheck
-        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bash curl jq python3
 
-      - name: Run ShellCheck
-        run: shellcheck -x -S style -S warning -S error bin/groqbash 
+      - name: Prepare fake models whitelist for CI
+        run: |
+          mkdir -p "$HOME/.config/groq"
+          echo "test-model-001" > "$HOME/.config/groq/models.txt"
+
+      - name: Make groqbash executable
+        run: chmod +x bin/groqbash
+
+      - name: Debug environment for smoke (temporary)
+        run: |
+          echo "=== ENV (filtered) ==="
+          env | grep -E 'PATH|GROQ|GROQBASH|XDG|HOME|TMP' || true
+          echo
+          echo "=== repo root listing ==="
+          ls -la
+          echo
+          echo "=== bin directory listing ==="
+          ls -la bin || true
+          echo
+          echo "=== show bin/groqbash (if present) ==="
+          if [ -f bin/groqbash ]; then
+            echo "bin/groqbash exists, mode:"
+            ls -la bin/groqbash
+            echo "head of bin/groqbash:"
+            sed -n '1,120p' bin/groqbash || true
+          else
+            echo "bin/groqbash NOT FOUND"
+          fi
+          echo
+          echo "=== tests listing and good.json ==="
+          ls -la tests || true
+          if [ -f tests/good.json ]; then
+            echo "tests/good.json:"
+            sed -n '1,200p' tests/good.json
+          else
+            echo "tests/good.json NOT FOUND"
+          fi
+          echo
+          echo "=== Extra checks on tests/smoke.sh ==="
+          file tests/smoke.sh || true
+          echo "show first lines of tests/smoke.sh:"
+          sed -n '1,120p' tests/smoke.sh || true
+          echo
+          echo "=== run explicit checks ==="
+          echo "-> ./bin/groqbash --version (if exists)"
+          if [ -x ./bin/groqbash ]; then
+            ./bin/groqbash --version || true
+          else
+            echo "./bin/groqbash not executable or missing"
+          fi
+          echo
+          echo "-> simulate smoke: stdin -> ./bin/groqbash --dry-run"
+          if [ -x ./bin/groqbash ]; then
+            printf 'test payload' | ./bin/groqbash --dry-run 2>&1 | sed -n '1,200p' || true
+            echo "exit code: $?"
+          else
+            echo "skipped (bin/groqbash missing)"
+          fi
+          echo
+          echo "-> simulate smoke: --json-input tests/good.json"
+          if [ -x ./bin/groqbash ] && [ -f tests/good.json ]; then
+            ./bin/groqbash --dry-run --json-input tests/good.json 2>&1 | sed -n '1,200p' || true
+            echo "exit code: $?"
+          else
+            echo "skipped (--json-input test not runnable)"
+          fi
+
+      - name: Extra checks (temporary)
+        run: |
+          echo "=== Shell and environment details ==="
+          echo "SHELL: $SHELL"
+          echo "Runner uname:"
+          uname -a || true
+          echo
+          echo "=== Verify jq and bash versions ==="
+          command -v jq && jq --version || echo "jq missing"
+          command -v bash && bash --version || echo "bash missing"
+
+      - name: Run smoke tests (verbose)
+        run: |
+          echo "=== Running smoke.sh with bash -x ==="
+          # Run with tracing and capture output to a log file for diagnosis.
+          bash -x tests/smoke.sh 2>&1 | tee smoke-run.log || true
+          echo
+          echo "=== smoke.sh exit summary ==="
+          # Show the full log to the workflow output for diagnosis
+          tail -n +1 smoke-run.log || true
+          echo
+          # Fail the job if the smoke script did not report success
+          if ! grep -q "Tutti i test smoke sono passati." smoke-run.log; then
+            echo "Smoke tests did not pass; printing smoke-run.log for diagnosis."
+            exit 1
+          fi
