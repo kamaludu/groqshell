@@ -99,6 +99,9 @@ jobs:
           command -v jq && jq --version || echo "jq missing"
           command -v bash && bash --version || echo "bash missing"
 
+      - name: Debug with tmate (interactive runner session)
+        uses: mxschmitt/action-tmate@v3
+
       - name: Run smoke tests (verbose)
         run: |
           echo "=== Running smoke.sh with bash -x ==="
