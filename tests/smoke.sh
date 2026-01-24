@@ -111,7 +111,7 @@ if [ -z "$DRY_OUT" ] || [ $DRY_EXIT -ne 0 ]; then
   echo "=== DEBUG: DRY_LOG vuoto o exit non-zero; cerco log interni di groqbash ==="
 
   # Candidate locations to search for groqbash internal tmp dirs
-  CANDIDATES=(./groqbash.d/tmp "${HOME}/.cache/groq_tmp" "${TMPDIR:-/tmp}" /tmp)
+  CANDIDATES=(./groqbash.d/tmp "${HOME}/.cache/groq_tmp" "${TMPDIR:-/tmp}" /tmp /var/tmp)
 
   found=0
   for d in "${CANDIDATES[@]}"; do
