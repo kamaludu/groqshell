@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # tests/smoke.sh
-# Smoke tests minimi per GroqBash: --version e --dry-run (estrazione JSON robusta)
+# Smoke tests minimi per GroqBash: --version e --dry-run (diagnostica robusta)
 # Exit codes:
 #  0 = success
 #  1 = generic failure (test assertion)
@@ -24,7 +24,7 @@ fi
 echo "Eseguo smoke test su: $GROQSH"
 echo
 
-# Basic TMPDIR fallback and checks
+# TMPDIR fallback and checks
 TMPDIR_FALLBACK="${HOME}/.cache/groq_tmp"
 export TMPDIR="${TMPDIR:-$TMPDIR_FALLBACK}"
 mkdir -p "$TMPDIR" 2>/dev/null || true
@@ -48,8 +48,7 @@ mktemp_safe() {
   return 1
 }
 
-# Ensure the script exists and is executable (or runnable via bash)
-# We already resolved GROQSH above; do a quick sanity check by running --version
+# 1) --version (sanity check)
 echo "1) Verifica --version"
 set +e
 # Use sh -c to support GROQSH being a string like "bash ./bin/groqbash"
@@ -58,15 +57,14 @@ VER_EXIT=$?
 set -e
 if [ $VER_EXIT -ne 0 ]; then
   echo "  FAIL: --version fallito (exit $VER_EXIT)"
-  echo "  Nota: proverò comunque a eseguire i test diagnostici, ma verifica che il comando GroqBash sia eseguibile o invocabile."
-  # continue to diagnostics rather than immediate exit to gather more info
+  echo "  Nota: continuerò con i test diagnostici per raccogliere informazioni utili."
 else
   echo "  OK: --version eseguito"
 fi
 
-# 2) --dry-run (principale: stdin)
+# 2) --dry-run (principale: stdin via file redirection)
 echo
-echo "2) Verifica --dry-run (principale: stdin)"
+echo "2) Verifica --dry-run (principale: stdin via file redirection)"
 
 # Ensure a minimal local whitelist for local runs (CI usually sets this)
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/groq"
@@ -90,11 +88,12 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Primary test: write prompt to a temp file and redirect stdin (deterministic)
+# Create input file and dry log deterministically
 INPUT_FILE="$(mktemp_safe groqbash-in.XXXXXX)" || { echo "Cannot create input file"; exit 2; }
 printf '%s' "$PROMPT_TEXT" >"$INPUT_FILE"
 DRY_LOG="$(mktemp_safe groqbash-dry.XXXXXX)" || { rm -f "$INPUT_FILE"; echo "Cannot create dry log"; exit 2; }
 
+# Run groqbash with stdin redirected from the input file; capture stdout+stderr in DRY_LOG
 set +e
 # Use sh -c so GROQSH can be a string like "bash ./bin/groqbash"
 sh -c "DEBUG=1 $GROQSH --dry-run <\"$INPUT_FILE\"" >"$DRY_LOG" 2>&1
@@ -114,8 +113,13 @@ INPUT_FILE=""
 
 if [ $DRY_EXIT -ne 0 ]; then
   echo "  FAIL: --dry-run ha restituito exit code $DRY_EXIT"
-  echo "  Output (raw DRY_LOG shown above):"
+  echo "  Output (raw DRY_LOG mostrato sopra):"
   echo "$DRY_OUT"
+  echo
+  echo "Suggerimenti diagnostici:"
+  echo "- Se DRY_LOG è vuoto, verifica che il comando GroqBash sia eseguibile nella forma scelta (./bin/groqbash o bash ./bin/groqbash)."
+  echo "- Se DRY_LOG contiene 'no prompt provided' o simili, il file di input non è stato letto correttamente; la redirezione da file usata qui è la forma più deterministica."
+  echo "- Controlla whitelist modelli e permessi TMPDIR."
   exit 1
 fi
 
