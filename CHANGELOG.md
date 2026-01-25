@@ -9,6 +9,8 @@
 ---
 
 ## [1.0.0] – 2026‑01‑23 - [RELEASE NOTES](RELEASE-NOTES.md)
+[![Announcements](https://img.shields.io/badge/GroqBash-Announcements-green?logo=github)](https://github.com/kamaludu/groqbash/discussions/127)
+
 ### Added
 - Full security‑hardened release after STEP 5.6 → STEP 7.2 audit cycle
 - Dynamic model whitelist using Groq Models API (`/openai/v1/models`)
