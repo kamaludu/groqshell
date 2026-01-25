@@ -73,15 +73,16 @@ jobs:
           echo "TMPDIR=$TMPDIR" >> "$GITHUB_ENV"
           echo "TMPDIR set to: $TMPDIR"
 
-      - name: Ensure tests/good.json exists
+      - name: Ensure tests/good.json exists (use prompt field)
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p tests
+          # Use a minimal JSON with "prompt" to match groqbash expected input shape
           jq -n \
             --arg model "llama-3.3-70b-versatile" \
-            --arg content "Test automatico: rispondi con una frase breve." \
-            '{model:$model,stream:false,temperature:0.0,max_tokens:16,messages:[{role:"user",content:$content}]}' \
+            --arg prompt "Test automatico: rispondi con una frase breve." \
+            '{model:$model,prompt:$prompt,stream:false,temperature:0.0,max_tokens:16}' \
             > tests/good.json
           chmod 600 tests/good.json || true
           echo "tests/good.json:"
