@@ -38,24 +38,29 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${GROQ_API_KEY:-}" ]; then
-            echo "ERROR: GROQ_API_KEY secret is not set or is empty. Smoke tests require this secret when running in CI."
+            echo "ERROR: GROQ_API_KEY secret is not set or is empty."
             exit 2
           fi
-          echo "GROQ_API_KEY set: ${GROQ_API_KEY:+yes}"
 
-      - name: Prepare models whitelist in fixed HOME and internal groqbash models dir
+      - name: Prepare whitelist and config directories
         shell: bash
         run: |
           set -euo pipefail
-          CONFIG_DIR="/home/runner/.config/groq"
-          mkdir -p "$CONFIG_DIR"
-          printf '%s\n' "llama-3.3-70b-versatile" > "$CONFIG_DIR/models.txt"
-          chmod 600 "$CONFIG_DIR/models.txt" || true
 
-          INTERNAL_MODELS_DIR="./bin/groqbash.d/models"
-          mkdir -p "$INTERNAL_MODELS_DIR"
-          printf '%s\n' "llama-3.3-70b-versatile" > "$INTERNAL_MODELS_DIR/models.txt"
-          chmod 600 "$INTERNAL_MODELS_DIR/models.txt" || true
+          # XDG whitelist
+          mkdir -p /home/runner/.config/groq
+          echo "llama-3.3-70b-versatile" > /home/runner/.config/groq/models.txt
+          chmod 600 /home/runner/.config/groq/models.txt || true
+
+          # Internal whitelist
+          mkdir -p ./bin/groqbash.d/models
+          echo "llama-3.3-70b-versatile" > ./bin/groqbash.d/models/models.txt
+          chmod 600 ./bin/groqbash.d/models/models.txt || true
+
+          # REQUIRED: internal config file (even empty)
+          mkdir -p ./bin/groqbash.d/config
+          touch ./bin/groqbash.d/config/config
+          chmod 600 ./bin/groqbash.d/config/config || true
 
       - name: Make groqbash executable
         shell: bash
@@ -63,7 +68,7 @@ jobs:
           set -euo pipefail
           chmod +x bin/groqbash || true
 
-      - name: Persist runner temp as TMPDIR for the job
+      - name: Persist runner temp as TMPDIR
         shell: bash
         run: |
           set -euo pipefail
@@ -71,84 +76,26 @@ jobs:
           mkdir -p "$TMPDIR"
           chmod 700 "$TMPDIR"
           echo "TMPDIR=$TMPDIR" >> "$GITHUB_ENV"
-          echo "TMPDIR set to: $TMPDIR"
 
-      - name: Ensure tests/good.json exists (use prompt field)
+      - name: Create test JSON
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p tests
-          # Use a minimal JSON with "prompt" to match groqbash expected input shape
           jq -n \
             --arg model "llama-3.3-70b-versatile" \
-            --arg prompt "Test automatico: rispondi con una frase breve." \
-            '{model:$model,prompt:$prompt,stream:false,temperature:0.0,max_tokens:16}' \
+            --arg content "Test automatico: rispondi con una frase breve." \
+            '{model:$model,stream:false,temperature:0.0,max_tokens:16,messages:[{role:"user",content:$content}]}' \
             > tests/good.json
           chmod 600 tests/good.json || true
-          echo "tests/good.json:"
-          jq . tests/good.json
 
-      - name: Quick groqbash sanity checks (--version, --help)
+      - name: Run smoke test
         shell: bash
         run: |
           set -euo pipefail
-          if [ -x "./bin/groqbash" ]; then
-            BIN="./bin/groqbash"
-          elif [ -x "./groqbash" ]; then
-            BIN="./groqbash"
-          elif command -v groqbash >/dev/null 2>&1; then
-            BIN="$(command -v groqbash)"
-          else
-            echo "FAIL: groqbash non trovato"
-            exit 2
-          fi
 
-          echo "groqbash path: $BIN"
-          set +e
-          "$BIN" --version >./_ver 2>&1
-          RC_VER=$?
-          echo "--version exit: $RC_VER"
-          sed -n '1,50p' ./_ver || true
-          "$BIN" --help >./_help 2>&1
-          RC_HELP=$?
-          echo "--help exit: $RC_HELP"
-          sed -n '1,200p' ./_help || true
-          rm -f ./_ver ./_help
-          set -e
-
-      - name: Dump groqbash config and models (for debugging)
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "Listing internal groqbash.d tree:"
-          find ./bin -maxdepth 4 -type f -printf '%p %M %s\n' || true
-          echo "Internal models file content:"
-          if [ -f ./bin/groqbash.d/models/models.txt ]; then
-            sed -n '1,200p' ./bin/groqbash.d/models/models.txt || true
-          else
-            echo "(missing)"
-          fi
-          echo "XDG config models file content:"
-          if [ -f /home/runner/.config/groq/models.txt ]; then
-            sed -n '1,200p' /home/runner/.config/groq/models.txt || true
-          else
-            echo "(missing)"
-          fi
-
-      - name: Run groqbash with explicit model, DEBUG and full trace
-        shell: bash
-        env:
-          DEBUG: "1"
-        run: |
-          set -euo pipefail
-
-          # Locate groqbash binary
           if [ -x "./bin/groqbash" ]; then
             GROQ_BIN="./bin/groqbash"
-          elif [ -x "./groqbash" ]; then
-            GROQ_BIN="./groqbash"
-          elif command -v groqbash >/dev/null 2>&1; then
-            GROQ_BIN="$(command -v groqbash)"
           else
             echo "FAIL: groqbash non trovato"
             exit 2
@@ -156,40 +103,24 @@ jobs:
 
           export HOME="/home/runner"
           export TMPDIR="${TMPDIR:-${RUNNER_TEMP:-/tmp}}"
-          export TMP="${TMP:-$TMPDIR}"
-          export TEMP="${TEMP:-$TMPDIR}"
-          export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-          export DEBUG="1"
+          export TMP="$TMPDIR"
+          export TEMP="$TMPDIR"
+          export XDG_CONFIG_HOME="${HOME}/.config"
 
-          echo "=== Sanity: environment ==="
-          echo "USER=$(id -un) UID=$(id -u) HOME=$HOME TMPDIR=$TMPDIR DEBUG=$DEBUG"
-          echo "=== Sanity: files ==="
-          ls -la "$GROQ_BIN" || true
-          ls -la "$XDG_CONFIG_HOME/groq/models.txt" || true
-          ls -la ./bin/groqbash.d/models/models.txt || true
-          ls -la tests/good.json || true
-          echo "=== groqbash head (first 20 lines) ==="
-          sed -n '1,20p' "$GROQ_BIN" || true
-
-          TRACE_OUT="$(mktemp)"
+          OUTFILE="$(mktemp)"
           set +e
-          # Run with bash -x to trace internal commands and force the model explicitly
-          bash -x "$GROQ_BIN" --dry-run --model "llama-3.3-70b-versatile" tests/good.json >"$TRACE_OUT" 2>&1
+          "$GROQ_BIN" --dry-run tests/good.json >"$OUTFILE" 2>&1
           RC=$?
           set -e
 
-          echo "groqbash exit code: $RC"
-          if [ -s "$TRACE_OUT" ]; then
-            echo "Trace output (first 400 lines):"
-            sed -n '1,400p' "$TRACE_OUT"
-          else
-            echo "Trace output empty"
-          fi
-          rm -f "$TRACE_OUT"
-
           if [ $RC -ne 0 ]; then
             echo "FAIL: --dry-run ha restituito exit code $RC"
+            echo "Output:"
+            sed -n '1,200p' "$OUTFILE" || true
+            rm -f "$OUTFILE"
             exit 1
           fi
 
           echo "OK: --dry-run completato con exit code 0"
+          sed -n '1,200p' "$OUTFILE"
+          rm -f "$OUTFILE"
