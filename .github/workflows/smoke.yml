@@ -39,7 +39,6 @@ jobs:
           set -euo pipefail
           if [ -z "${GROQ_API_KEY:-}" ]; then
             echo "ERROR: GROQ_API_KEY secret is not set or is empty. Smoke tests require this secret when running in CI."
-            echo "If this is a forked PR, secrets are not available; consider running smoke tests from a branch in the main repository."
             exit 2
           fi
 
@@ -47,13 +46,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Whitelist for XDG_CONFIG_HOME (used by some configs)
           CONFIG_DIR="/home/runner/.config/groq"
           mkdir -p "$CONFIG_DIR"
           printf '%s\n' "llama-3.3-70b-versatile" > "$CONFIG_DIR/models.txt"
           chmod 600 "$CONFIG_DIR/models.txt" || true
 
-          # Also populate the internal groqbash models file under bin/groqbash.d/models
           INTERNAL_MODELS_DIR="./bin/groqbash.d/models"
           mkdir -p "$INTERNAL_MODELS_DIR"
           printf '%s\n' "llama-3.3-70b-versatile" > "$INTERNAL_MODELS_DIR/models.txt"
@@ -86,8 +83,10 @@ jobs:
             '{model:$model,stream:false,temperature:0.0,max_tokens:16,messages:[{role:"user",content:$content}]}' \
             > tests/good.json
           chmod 600 tests/good.json || true
+          echo "tests/good.json content:"
+          jq . tests/good.json
 
-      - name: Run smoke tests (direct execution, explicit env)
+      - name: Run smoke tests with full internal trace (bash -x)
         shell: bash
         run: |
           set -euo pipefail
@@ -111,35 +110,46 @@ jobs:
           export TEMP="${TEMP:-$TMPDIR}"
           export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 
-          # Ensure whitelist is present in the effective HOME (redundant-safe)
+          # Defensive: ensure whitelist exists in all known locations
           mkdir -p "$XDG_CONFIG_HOME/groq"
           printf '%s\n' "llama-3.3-70b-versatile" > "$XDG_CONFIG_HOME/groq/models.txt"
           chmod 600 "$XDG_CONFIG_HOME/groq/models.txt" || true
 
-          # Ensure internal models file exists (again, defensive)
           mkdir -p "./bin/groqbash.d/models"
           printf '%s\n' "llama-3.3-70b-versatile" > "./bin/groqbash.d/models/models.txt"
           chmod 600 "./bin/groqbash.d/models/models.txt" || true
 
-          OUTFILE="$(mktemp)"
+          # Quick sanity listing
+          echo "=== Sanity: environment ==="
+          echo "USER=$(id -un) UID=$(id -u) HOME=$HOME TMPDIR=$TMPDIR"
+          echo "=== Sanity: files ==="
+          ls -la "$GROQ_BIN" || true
+          ls -la "$XDG_CONFIG_HOME/groq/models.txt" || true
+          ls -la ./bin/groqbash.d/models/models.txt || true
+          ls -la tests/good.json || true
+          echo "=== groqbash head (first 20 lines) ==="
+          sed -n '1,20p' "$GROQ_BIN" || true
+
+          # Run groqbash with tracing to reveal the failing command
+          TRACE_OUT="$(mktemp)"
           set +e
-          "$GROQ_BIN" --dry-run tests/good.json >"$OUTFILE" 2>&1
+          # Use bash -x to trace commands inside the script; capture both stdout and stderr
+          bash -x "$GROQ_BIN" --dry-run tests/good.json >"$TRACE_OUT" 2>&1
           RC=$?
           set -e
 
+          echo "groqbash exit code: $RC"
+          if [ -s "$TRACE_OUT" ]; then
+            echo "Trace output (first 400 lines):"
+            sed -n '1,400p' "$TRACE_OUT"
+          else
+            echo "Trace output empty"
+          fi
+          rm -f "$TRACE_OUT"
+
           if [ $RC -ne 0 ]; then
             echo "FAIL: --dry-run ha restituito exit code $RC"
-            if [ -s "$OUTFILE" ]; then
-              echo "Output (first 200 lines):"
-              sed -n '1,200p' "$OUTFILE"
-            else
-              echo "Output vuoto."
-            fi
-            rm -f "$OUTFILE"
             exit 1
           fi
 
           echo "OK: --dry-run completato con exit code 0"
-          echo "Output (first 200 lines):"
-          sed -n '1,200p' "$OUTFILE"
-          rm -f "$OUTFILE"
