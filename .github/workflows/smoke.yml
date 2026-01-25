@@ -69,20 +69,11 @@ jobs:
             sudo apt-get -yq install --no-install-recommends jq
           fi
           mkdir -p tests
-          cat > tests/good.json <<'JSON'
-{
-  "model": "llama-3.3-70b-versatile",
-  "stream": false,
-  "temperature": 0.7,
-  "max_tokens": 512,
-  "messages": [
-    {
-      "role": "user",
-      "content": "Ciao! Questo è un test automatico. Rispondi brevemente con un saluto e chiedi come posso aiutare."
-    }
-  ]
-}
-JSON
+          jq -n \
+            --arg model "llama-3.3-70b-versatile" \
+            --arg content "Ciao! Questo è un test automatico. Rispondi brevemente con un saluto e chiedi come posso aiutare." \
+            '{model:$model,stream:false,temperature:0.7,max_tokens:512,messages:[{role:"user",content:$content}]}' \
+            > tests/good.json
           chmod 600 tests/good.json || true
 
       - name: Run smoke tests
