@@ -41,7 +41,6 @@ jobs:
             echo "ERROR: GROQ_API_KEY secret is not set or is empty. Smoke tests require this secret when running in CI."
             exit 2
           fi
-          # Non stampare il valore del secret; solo conferma presenza
           echo "GROQ_API_KEY set: ${GROQ_API_KEY:+yes}"
 
       - name: Prepare models whitelist in fixed HOME and internal groqbash models dir
@@ -135,7 +134,7 @@ jobs:
             echo "(missing)"
           fi
 
-      - name: Run groqbash with full trace (bash -x) and capture output
+      - name: Run groqbash with explicit model, DEBUG and full trace
         shell: bash
         env:
           DEBUG: "1"
@@ -173,8 +172,8 @@ jobs:
 
           TRACE_OUT="$(mktemp)"
           set +e
-          # Run with bash -x to trace internal commands; capture both stdout and stderr
-          bash -x "$GROQ_BIN" --dry-run tests/good.json >"$TRACE_OUT" 2>&1
+          # Run with bash -x to trace internal commands and force the model explicitly
+          bash -x "$GROQ_BIN" --dry-run --model "llama-3.3-70b-versatile" tests/good.json >"$TRACE_OUT" 2>&1
           RC=$?
           set -e
 
