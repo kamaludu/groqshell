@@ -2,9 +2,9 @@ name: Smoke tests
 
 on:
   push:
-    branches: [ "main", "release-v1.3" ]
+    branches: ["main", "release-v1.3"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 concurrency:
   group: smoke-${{ github.ref }}
@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      HOME: /home/runner
 
     steps:
       - name: Checkout repository
@@ -42,11 +43,11 @@ jobs:
             exit 2
           fi
 
-      - name: Prepare fake models whitelist for CI
+      - name: Prepare models whitelist in fixed HOME
         shell: bash
         run: |
           set -euo pipefail
-          CONFIG_DIR="$HOME/.config/groq"
+          CONFIG_DIR="/home/runner/.config/groq"
           mkdir -p "$CONFIG_DIR"
           printf '%s\n' "llama-3.3-70b-versatile" > "$CONFIG_DIR/models.txt"
           chmod 600 "$CONFIG_DIR/models.txt" || true
@@ -79,12 +80,12 @@ jobs:
             > tests/good.json
           chmod 600 tests/good.json || true
 
-      - name: Run smoke tests
+      - name: Run smoke tests (direct execution, explicit env)
         shell: bash
         run: |
           set -euo pipefail
 
-          # Locate groqbash binary and run it directly with explicit env
+          # Prefer direct execution of the script
           if [ -x "./bin/groqbash" ]; then
             GROQ_BIN="./bin/groqbash"
           elif [ -x "./groqbash" ]; then
@@ -96,10 +97,14 @@ jobs:
             exit 2
           fi
 
+          # Ensure environment variables groqbash may rely on
+          export HOME="/home/runner"
           export TMPDIR="${TMPDIR:-${RUNNER_TEMP:-/tmp}}"
           export TMP="${TMP:-$TMPDIR}"
           export TEMP="${TEMP:-$TMPDIR}"
           export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+          # Ensure whitelist is present in the effective HOME
           mkdir -p "$XDG_CONFIG_HOME/groq"
           printf '%s\n' "llama-3.3-70b-versatile" > "$XDG_CONFIG_HOME/groq/models.txt"
           chmod 600 "$XDG_CONFIG_HOME/groq/models.txt" || true
