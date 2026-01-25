@@ -47,7 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p tests
-          cat > tests/good.json <<'JSON'
+          cat > tests/good.json <<'EOF'
 {
   "model": "llama-3.3-70b-versatile",
   "stream": false,
@@ -60,7 +60,7 @@ jobs:
     }
   ]
 }
-JSON
+EOF
           chmod 600 tests/good.json
         shell: bash
 
