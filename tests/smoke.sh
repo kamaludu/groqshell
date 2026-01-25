@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+# =============================================================================
+# GroqBash — Bash-first wrapper for the Groq API
+# File: tests/smoke.sh
+# Copyright (C) 2026 Cristian Evangelisti
+# License: GPL-3.0-or-later
+# Source: https://github.com/kamaludu/groqbash
+# =============================================================================
 set -euo pipefail
 
 # tests/smoke.sh
