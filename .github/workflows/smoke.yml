@@ -60,6 +60,31 @@ jobs:
           set -euo pipefail
           chmod +x bin/groqbash
 
+      - name: Ensure jq and prepare tests/good.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get -yq update
+            sudo apt-get -yq install --no-install-recommends jq
+          fi
+          mkdir -p tests
+          cat > tests/good.json <<'JSON'
+{
+  "model": "llama-3.3-70b-versatile",
+  "stream": false,
+  "temperature": 0.7,
+  "max_tokens": 512,
+  "messages": [
+    {
+      "role": "user",
+      "content": "Ciao! Questo è un test automatico. Rispondi brevemente con un saluto e chiedi come posso aiutare."
+    }
+  ]
+}
+JSON
+          chmod 600 tests/good.json || true
+
       - name: Run smoke tests
         shell: bash
         run: |
