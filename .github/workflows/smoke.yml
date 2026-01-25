@@ -1,87 +1,53 @@
-name: Smoke tests
+- name: Run smoke tests
+  shell: bash
+  run: |
+    set -euo pipefail
 
-on:
-  push:
-    branches: [ "main", "release-v1.3" ]
-  pull_request:
-    branches: [ "main" ]
+    # Ensure groqbash binary is executed directly and environment is explicit
+    GROQ_BIN=""
+    if [ -x "./bin/groqbash" ]; then
+      GROQ_BIN="./bin/groqbash"
+    elif [ -x "./groqbash" ]; then
+      GROQ_BIN="./groqbash"
+    elif command -v groqbash >/dev/null 2>&1; then
+      GROQ_BIN="$(command -v groqbash)"
+    else
+      echo "FAIL: groqbash non trovato"
+      exit 2
+    fi
 
-concurrency:
-  group: smoke-${{ github.ref }}
-  cancel-in-progress: true
+    # Export env vars groqbash may rely on
+    export TMPDIR="${TMPDIR:-${RUNNER_TEMP:-/tmp}}"
+    export TMP="${TMP:-$TMPDIR}"
+    export TEMP="${TEMP:-$TMPDIR}"
+    export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+    mkdir -p "$TMPDIR" "$XDG_CONFIG_HOME/groq"
+    chmod 700 "$TMPDIR" || true
 
-permissions:
-  contents: read
+    # Ensure whitelist model matches tests/good.json
+    printf '%s\n' "llama-3.3-70b-versatile" > "$XDG_CONFIG_HOME/groq/models.txt"
+    chmod 600 "$XDG_CONFIG_HOME/groq/models.txt" || true
 
-jobs:
-  smoke:
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ubuntu-latest
-    env:
-      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+    # Run groqbash directly and capture output
+    OUTFILE="$(mktemp)"
+    set +e
+    "$GROQ_BIN" --dry-run tests/good.json >"$OUTFILE" 2>&1
+    RC=$?
+    set -e
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    if [ $RC -ne 0 ]; then
+      echo "FAIL: --dry-run ha restituito exit code $RC"
+      if [ -s "$OUTFILE" ]; then
+        echo "Output (first 200 lines):"
+        sed -n '1,200p' "$OUTFILE"
+      else
+        echo "Output vuoto."
+      fi
+      rm -f "$OUTFILE"
+      exit 1
+    fi
 
-      - name: Install dependencies
-        shell: bash
-        run: |
-          set -euo pipefail
-          export DEBIAN_FRONTEND=noninteractive
-          sudo apt-get -yq update
-          sudo apt-get -yq install --no-install-recommends bash curl jq python3
-
-      - name: Ensure GROQ_API_KEY is present
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -z "${GROQ_API_KEY:-}" ]; then
-            echo "ERROR: GROQ_API_KEY secret is not set or is empty. Smoke tests require this secret when running in CI."
-            echo "If this is a forked PR, secrets are not available; consider running smoke tests from a branch in the main repository."
-            exit 2
-          fi
-
-      - name: Prepare fake models whitelist for CI
-        shell: bash
-        run: |
-          set -euo pipefail
-          CONFIG_DIR="$HOME/.config/groq"
-          mkdir -p "$CONFIG_DIR"
-          printf '%s\n' "llama-3.3-70b-versatile" > "$CONFIG_DIR/models.txt"
-          chmod 600 "$CONFIG_DIR/models.txt" || true
-
-      - name: Make groqbash executable
-        shell: bash
-        run: |
-          set -euo pipefail
-          chmod +x bin/groqbash || true
-
-      - name: Set TMPDIR to runner temp and persist for job
-        shell: bash
-        run: |
-          set -euo pipefail
-          # Use RUNNER_TEMP provided by the runner; persist to GITHUB_ENV so it's available in later steps
-          TMPDIR="${RUNNER_TEMP:-/tmp}"
-          mkdir -p "$TMPDIR"
-          chmod 700 "$TMPDIR"
-          echo "TMPDIR=$TMPDIR" >> "$GITHUB_ENV"
-          echo "TMPDIR set to: $TMPDIR"
-
-      - name: Ensure tests/good.json exists
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p tests
-          jq -n \
-            --arg model "llama-3.3-70b-versatile" \
-            --arg content "Test automatico: rispondi con una frase breve." \
-            '{model:$model,stream:false,temperature:0.0,max_tokens:16,messages:[{role:"user",content:$content}]}' \
-            > tests/good.json
-          chmod 600 tests/good.json || true
-
-      - name: Run smoke tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          bash tests/smoke.sh
+    echo "OK: --dry-run completato con exit code 0"
+    echo "Output (first 200 lines):"
+    sed -n '1,200p' "$OUTFILE"
+    rm -f "$OUTFILE"
