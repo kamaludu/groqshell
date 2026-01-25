@@ -15,12 +15,9 @@ permissions:
 
 jobs:
   smoke:
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     env:
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-      HOME: /home/runner
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -33,40 +30,29 @@ jobs:
           sudo apt-get -yq update
           sudo apt-get -yq install --no-install-recommends bash curl jq python3
 
-      - name: Ensure GROQ_API_KEY is present
+      - name: Prepare minimal config and whitelist
         shell: bash
         run: |
           set -euo pipefail
-          if [ -z "${GROQ_API_KEY:-}" ]; then
-            echo "ERROR: GROQ_API_KEY secret is not set or is empty."
-            exit 2
-          fi
-
-      - name: Prepare whitelist and config directories
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          # XDG whitelist
-          mkdir -p /home/runner/.config/groq
-          echo "llama-3.3-70b-versatile" > /home/runner/.config/groq/models.txt
-          chmod 600 /home/runner/.config/groq/models.txt || true
-
-          # Internal whitelist
+          # XDG config for groqbash
+          mkdir -p "$HOME/.config/groq"
+          echo "llama-3.3-70b-versatile" > "$HOME/.config/groq/models.txt"
+          chmod 600 "$HOME/.config/groq/models.txt" || true
+          # Local internal config
           mkdir -p ./bin/groqbash.d/models
           echo "llama-3.3-70b-versatile" > ./bin/groqbash.d/models/models.txt
           chmod 600 ./bin/groqbash.d/models/models.txt || true
-
-          # REQUIRED: internal config file (even empty)
           mkdir -p ./bin/groqbash.d/config
           touch ./bin/groqbash.d/config/config
           chmod 600 ./bin/groqbash.d/config/config || true
 
-      - name: Make groqbash executable
+      - name: Make groqbash executable if present
         shell: bash
         run: |
           set -euo pipefail
-          chmod +x bin/groqbash || true
+          if [ -f bin/groqbash ]; then
+            chmod +x bin/groqbash || true
+          fi
 
       - name: Persist runner temp as TMPDIR
         shell: bash
@@ -77,49 +63,22 @@ jobs:
           chmod 700 "$TMPDIR"
           echo "TMPDIR=$TMPDIR" >> "$GITHUB_ENV"
 
-      - name: Create test JSON
+      - name: Create test JSON if missing
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p tests
-          jq -n \
-            --arg model "llama-3.3-70b-versatile" \
-            --arg content "Test automatico: rispondi con una frase breve." \
-            '{model:$model,stream:false,temperature:0.0,max_tokens:16,messages:[{role:"user",content:$content}]}' \
-            > tests/good.json
-          chmod 600 tests/good.json || true
+          if [ ! -f tests/good.json ]; then
+            jq -n \
+              --arg model "test-model-001" \
+              --arg content "Test automatico: rispondi con una frase breve." \
+              '{model:$model,stream:false,temperature:0.0,max_tokens:16,messages:[{role:"user",content:$content}]}' \
+              > tests/good.json
+            chmod 600 tests/good.json || true
+          fi
 
       - name: Run smoke test
         shell: bash
         run: |
           set -euo pipefail
-
-          if [ -x "./bin/groqbash" ]; then
-            GROQ_BIN="./bin/groqbash"
-          else
-            echo "FAIL: groqbash non trovato"
-            exit 2
-          fi
-
-          export HOME="/home/runner"
-          export TMPDIR="${TMPDIR:-${RUNNER_TEMP:-/tmp}}"
-          export TMP="$TMPDIR"
-          export TEMP="$TMPDIR"
-          export XDG_CONFIG_HOME="${HOME}/.config"
-
-          OUTFILE="$(mktemp)"
-          set +e
-          "$GROQ_BIN" --dry-run tests/good.json >"$OUTFILE" 2>&1
-          RC=$?
-          set -e
-
-          echo "Exit code: $RC"
-          echo "Output:"
-          sed -n '1,200p' "$OUTFILE"
-
-          if [ $RC -ne 0 ]; then
-            echo "FAIL: dry-run exit $RC"
-            exit 1
-          fi
-
-          echo "OK: --dry-run completato con exit code 0"
+          bash tests/smoke.sh
