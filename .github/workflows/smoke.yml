@@ -34,7 +34,9 @@ jobs:
           set -euo pipefail
           CONFIG_DIR="$HOME/.config/groq"
           mkdir -p "$CONFIG_DIR"
-          echo "test-model-001" > "$CONFIG_DIR/models.txt"
+          printf '%s\n' \
+            "test-model-001" \
+            > "$CONFIG_DIR/models.txt"
           chmod 600 "$CONFIG_DIR/models.txt"
 
       - name: Make groqbash executable
@@ -42,27 +44,6 @@ jobs:
         run: |
           set -euo pipefail
           chmod +x bin/groqbash
-
-      - name: Prepare CI prerequisites for smoke tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p tests
-          printf '%s\n' \
-            '{' \
-            '  "model": "llama-3.3-70b-versatile",' \
-            '  "stream": false,' \
-            '  "temperature": 0.7,' \
-            '  "max_tokens": 512,' \
-            '  "messages": [' \
-            '    {' \
-            '      "role": "user",' \
-            '      "content": "Verifica automatica: rispondi con una frase breve in italiano che confermi il funzionamento."' \
-            '    }' \
-            '  ]' \
-            '}' \
-            > tests/good.json
-          chmod 600 tests/good.json
 
       - name: Run smoke tests
         shell: bash
