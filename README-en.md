@@ -57,10 +57,10 @@ For full details, see **[SECURITY](SECURITY-en.md)**.
 - `bash`
 - `curl`
 - standard coreutils (`mktemp`, `chmod`, `mv`, `mkdir`, `head`, `sed`, `awk`, `grep`)
+- `jq` (JSON parsing)
 
 **Recommended**
 
-- `jq` (JSON parsing)
 - `python3` (optional fsync helper)
 - `sha256sum` or `shasum` (for optional security extras)
 
