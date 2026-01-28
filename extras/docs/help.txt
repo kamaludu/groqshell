@@ -67,9 +67,9 @@ Requirements
     - bash
     - curl
     - mktemp (secure directory creation)
+    - jq (JSON parsing)
 
   Recommended:
-    - jq (JSON parsing)
     - python3 (fsync)
     - coreutils (chmod, mv, etc.)
     - grep, sed, awk
