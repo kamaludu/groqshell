@@ -338,9 +338,10 @@ callapistreaming_groq() {
       'data: [DONE]'|'data:[DONE]') break ;;
       data:\ * )
         json="${line#data: }"
-        raw="$(printf '%s' "$json" | jq -R -c 'fromjson? | (.choices[]?.delta?.content // .choices[]?.message?.content // empty) | select(length>0)' 2>>"$ERRF" || true)"
-        if [ -n "$raw" ]; then
-          printf '%s' "$raw"
+        # Estrai il contenuto testuale senza virgolette usando jq -r
+        content="$(printf '%s' "$json" | jq -r 'fromjson? | (.choices[]?.delta?.content // .choices[]?.message?.content // "")' 2>>"$ERRF" || true)"
+        if [ -n "$content" ]; then
+          printf '%s' "$content"
         fi
         ;;
       *) ;;
@@ -393,6 +394,7 @@ refreshmodelsgroq() {
     cat "$parsed" > "$tmpout"
     mv "$tmpout" "$MODELS_FILE" 2>/dev/null || cp -f "$tmpout" "$MODELS_FILE" 2>/dev/null || true
     chmod 600 "$MODELS_FILE" 2>/dev/null || true
+    printf 'Models refreshed and saved to: %s\n' "$MODELS_FILE" >&2
     rm -rf "$tmpd"
     return 0
   else
@@ -966,7 +968,7 @@ if [ "$CHAT_MODE" -eq 1 ]; then
     [ -z "$CONVERSATION" ] && CONVERSATION="$userline" || CONVERSATION="${CONVERSATION}"$'\n\n'"User: ${userline}"
     CONTENT="$userline"
     build_payload_from_vars
-    if [ "${STREAM_MODE:-}" = "true" ]; then call_api_streaming || printf 'Streaming call failed.\n' >&2; else perform_request_once || printf 'Call failed.\n' >&2; fi
+    if [ "${STREAM_MODE:-}" = "true" ]; then call_apistreaming || printf 'Streaming call failed.\n' >&2; else perform_request_once || printf 'Call failed.\n' >&2; fi
   done
   exit 0
 fi
