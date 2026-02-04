@@ -27,17 +27,16 @@ Main options
   -m, --model <name>         Select model (e.g. llama3-70b-8192)
   -f <file>                  Use file as input
   --system <text>            Set system prompt
-  --temp <value>             Temperature (default: 1.0)
+  --ture <value>             Temperature (default: 1.0)
   --max <n>                  Max tokens (default: 4096)
 
-  --refresh-models           Update model list using Groq Models API
+  --refresh-models           Update model list for the current provider
   --list-models              Show available models
-  --set-default <model>      Set default model
-  --auto-default-policy <p>  preferred | alpha (default: preferred)
+  --set-default <model>      Set default model for the current provider
 
-  --provider <name>          Use external provider module (extras/providers)
-  --provider                 Interactive provider selection
-  --install-extras           Install extras (docs, utils, providers)
+  --provider <name>          Set provider (manual-only, terminates)
+  --provider                 Interactive provider selection (terminates)
+  --install-extras           Install extras (docs, providers, tools)
 
   --save                     Force save to file
   --nosave                   Force print to terminal
@@ -66,13 +65,8 @@ Requirements
   Required:
     - bash
     - curl
-    - mktemp (secure directory creation)
-
-  Recommended:
+    - coreutils (mktemp, chmod, mv, mkdir, head, sed, awk, grep)
     - jq (JSON parsing)
-    - python3 (fsync)
-    - coreutils (chmod, mv, etc.)
-    - grep, sed, awk
 
 Compatibility
 -------------
